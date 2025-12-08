@@ -1,0 +1,20 @@
+/* frontend/src/components/MainLayout.css */
+
+.app-layout-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.layout-content {
+    flex-grow: 1;
+    /*
+      ВОТ ОН! Нижний отступ, равный высоте TabBar + запас.
+      Он будет применяться ТОЛЬКО к страницам, обернутым в MainLayout.
+    */
+    padding-bottom: 75px;
+}
+/* Этот класс добавляется, когда TabBar виден, чтобы контент не перекрывался меню */
+.with-tab-bar {
+    padding-bottom: 75px; /* Высота TabBar (50px) + безопасная зона + запас */
+}

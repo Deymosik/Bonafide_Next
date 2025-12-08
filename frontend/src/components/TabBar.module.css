@@ -1,0 +1,78 @@
+/* frontend/src/components/TabBar.css */
+/* Переменные импортируются из глобального файла /src/styles/theme.css */
+.tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px; /* Стандартная высота для Tab Bar */
+
+    /* Используем вторичный цвет фона темы. Для "стеклянного" эффекта может потребоваться RGBA с прозрачностью. */
+    background-color: var(--app-secondary-bg-color);
+
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom); /* Отступ для "челки" на iPhone */
+}
+
+.tab-bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    flex-grow: 1;
+    height: 100%;
+
+    /* Цвет неактивной иконки и текста */
+    color: var(--app-hint-color);
+    transition: color 0.2s ease; /* Добавляем плавный переход цвета */
+}
+
+.tab-bar-item svg {
+    width: 22px;
+    height: 22px;
+    fill: var(--app-hint-color);
+    margin-bottom: 2px;
+    transition: transform 0.2s ease;
+}
+
+.tab-bar-item span {
+    font-size: 8px;
+    font-weight: 500;
+}
+
+/* Стили для АКТИВНОЙ кнопки */
+.tab-bar-item.active {
+    /* Цвет активной иконки и текста */
+    color: var(--app-button-color);
+}
+
+.tab-bar-item.active svg {
+    transform: scale(1.1); /* Слегка увеличиваем активную иконку */
+    fill: var(--app-button-color);
+}
+
+/* Стили для значка на корзине */
+.cart-icon-wrapper {
+    position: relative;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    background-color: var(--app-destructive-text-color);
+    color: var(--primary-accent-contrast);
+    font-size: 10px;
+    font-weight: bold;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--app-secondary-bg-color); /* Рамка в цвет фона панели */
+}

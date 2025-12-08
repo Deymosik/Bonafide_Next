@@ -1,0 +1,139 @@
+/* /src/app/globals.css - ФИНАЛЬНАЯ ВЕРСИЯ */
+
+/* ========================================= */
+/*      1. ПЕРЕМЕННЫЕ И ТЕМА                 */
+/* ========================================= */
+:root {
+  /* --- Общие константы (брендинг) --- */
+  --primary-accent: #c99e10;
+  --primary-accent-contrast: #ffffff;
+  --destructive-action: #ff3b30;
+  --positive-action: #34c759;
+  --link-color: #007aff;
+
+  /* --- Безопасные зоны --- */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/*
+   СВЕТЛАЯ ТЕМА
+   Использует переменные Telegram, если они есть, или фолбэки
+*/
+[data-theme='light'] {
+  --app-bg-color: var(--tg-theme-bg-color, #ffffff);
+  --app-secondary-bg-color: var(--tg-theme-secondary-bg-color, #f2f2f7);
+  --app-text-color: var(--tg-theme-text-color, #000000);
+  --app-hint-color: var(--tg-theme-hint-color, #8e8e93);
+  --app-separator-color: #e5e5ea;
+
+  --app-link-color: var(--tg-theme-link-color, #007aff);
+  --app-button-color: var(--tg-theme-button-color, #000000);
+  --app-button-text-color: var(--tg-theme-button-text-color, #ffffff);
+  --app-destructive-text-color: var(--tg-theme-destructive-text-color, #ff3b30);
+
+  --checkbox-border-color: #c7c7cc;
+}
+
+/*
+   ТЕМНАЯ ТЕМА
+   Жесткая палитра для браузеров. Выглядит дорого и профессионально.
+*/
+[data-theme='dark'] {
+  --app-bg-color: #121212;         /* Глубокий черный фон */
+  --app-secondary-bg-color: #1c1c1e; /* Темно-серый для карточек (Apple style) */
+  --app-text-color: #e0e0e0;       /* Мягкий белый текст */
+  --app-hint-color: #98989e;       /* Серый текст подсказок */
+  --app-separator-color: #38383a;  /* Разделители */
+
+  --app-link-color: #0a84ff;       /* Голубой для ссылок в темной теме */
+  --app-button-color: #c99e10;     /* Белые кнопки */
+  --app-button-text-color: #000000;/* Черный текст на кнопках */
+  --app-destructive-text-color: #ff453a;
+
+  --checkbox-border-color: #636366;
+
+  /* Переопределение переменных Telegram для темной темы браузера */
+  --tg-theme-bg-color: #121212;
+  --tg-theme-secondary-bg-color: #1c1c1e;
+  --tg-theme-text-color: #e0e0e0;
+}
+
+/* ========================================= */
+/*      2. ГЛОБАЛЬНЫЕ СБРОСЫ И БАЗА          */
+/* ========================================= */
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Применяем переменные (они теперь зависят от data-theme) */
+  background-color: var(--app-bg-color);
+  color: var(--app-text-color);
+
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: manipulation;
+  padding-top: 0;
+
+  /* Плавный переход при смене темы */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.sticky-top-safe {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  top: var(--safe-area-inset-top);
+  z-index: 100;
+  background-color: var(--app-bg-color);
+  transition: background-color 0.3s ease; /* Добавили анимацию и сюда */
+}
+
+/* ========================================= */
+/*      3. СТРУКТУРА ЛЕЙАУТА                 */
+/* ========================================= */
+
+.app-layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+}
+
+.layout-content {
+  flex-grow: 1;
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.app-layout-container:has(nav) .layout-content,
+.layout-content.with-tab-bar {
+  padding-bottom: calc(60px + var(--safe-area-inset-bottom));
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--app-secondary-bg-color);
+  border-radius: 3px;
+}

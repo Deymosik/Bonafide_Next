@@ -1,0 +1,115 @@
+/* frontend/src/components/FreeShippingProgressBar.css */
+/* Переменные импортируются из глобального файла /src/styles/theme.css */
+
+.shipping-progress-bar {
+    /* Используем фон страницы, чтобы плашка как бы "лежала" на ней */
+    background-color: var(--app-bg-color);
+    padding: 12px;
+    border-radius: 16px; /* Более сильное скругление */
+    margin-bottom: 16px;
+
+    /* Добавляем рамку в цвет второстепенного фона для объема */
+    border: 1px solid var(--app-secondary-bg-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Легкая тень */
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative; /* Для трека прогресс-бара */
+    overflow: hidden; /* Обрезаем все лишнее */
+}
+
+/* Анимация плавного появления */
+.shipping-progress-bar.animate-in {
+    animation: slideDownFadeIn 0.5s ease-out;
+}
+
+.shipping-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--app-secondary-bg-color);
+}
+
+.shipping-icon-wrapper svg {
+    width: 28px;
+    height: 28px;
+    fill: var(--app-text-color);
+}
+
+.shipping-text-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.shipping-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--app-text-color);
+}
+
+.shipping-subtitle {
+    font-size: 13px;
+    color: var(--app-hint-color);
+}
+
+.progress-track {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: var(--app-separator-color); /* Используем цвет разделителя для трека */
+}
+
+.progress-fill {
+    height: 100%;
+    /* Красивый градиент для полоски */
+    background: linear-gradient(90deg, var(--app-button-color), var(--app-link-color));
+    transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* Более плавная анимация */
+}
+
+/* --- СТИЛИ ДЛЯ СОСТОЯНИЯ "УСПЕХ" --- */
+
+.shipping-progress-bar.success {
+    /* Акцентная рамка */
+    border-color: var(--app-button-color);
+}
+
+.shipping-icon-wrapper.success-icon {
+    /* Акцентный фон для иконки */
+    background-color: var(--app-button-color);
+    animation: popIn 0.5s ease-out; /* Анимация "празднования" */
+}
+
+.shipping-icon-wrapper.success-icon svg {
+    fill: var(--app-button-text-color); /* Используем контрастный цвет для иконки */
+}
+
+.shipping-progress-bar.success .shipping-title {
+    color: var(--app-button-color); /* Текст в цвет успеха */
+}
+
+/* --- АНИМАЦИИ --- */
+
+@keyframes slideDownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}

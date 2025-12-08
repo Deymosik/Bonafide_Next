@@ -1,0 +1,32 @@
+/* frontend/src/components/ProductGallery.css */
+
+.product-swiper {
+    width: 100%;
+    height: 300px;
+    --swiper-pagination-color: var(--tg-theme-button-color, #007aff);
+    --swiper-pagination-bullet-inactive-color: #ffffff;
+    --swiper-pagination-bullet-inactive-opacity: 0.5;
+    /* 1. Добавляем фон, который будет виден по бокам у неквадратных фото */
+    background-color: var(--tg-theme-secondary-bg-color, #f1f1f1);
+}
+
+.product-swiper .swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-in;
+}
+
+.product-swiper .swiper-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    /*
+      2. ГЛАВНОЕ ИЗМЕНЕНИЕ: Заменяем 'cover' на 'contain'
+      'contain' - Гарантирует, что все изображение будет видно.
+      Оно будет вписано в контейнер, сохраняя свои пропорции.
+      Пустое пространство будет заполнено фоном .product-swiper.
+    */
+    object-fit: contain;
+}

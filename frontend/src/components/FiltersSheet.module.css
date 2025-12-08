@@ -1,0 +1,92 @@
+/* frontend/src/components/FiltersSheet.css */
+.filters-sheet {
+    display: flex;
+    flex-direction: column;
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--app-separator-color);
+    margin-bottom: 16px;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.header-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+}
+.header-btn.apply {
+    color: var(--app-button-color);
+    font-weight: 600;
+}
+.header-btn.reset {
+    color: var(--app-hint-color);
+}
+
+.filters-section {
+    margin-bottom: 24px;
+}
+
+.filters-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--app-hint-color);
+}
+
+/* Стили для сортировки (можно взять из HomePage.css) */
+.sort-option {
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.sort-option:active {
+    background-color: rgba(0,0,0,0.05);
+}
+.sort-option.active {
+    color: var(--app-button-color);
+    font-weight: 600;
+    background-color: var(--app-bg-color);
+}
+
+
+/* Стили для дерева категорий */
+.category-tree {
+    max-height: 30vh;
+    overflow-y: auto;
+    border-radius: 12px;
+    background-color: var(--app-bg-color);
+    padding: 8px;
+}
+
+.category-name {
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.category-name:active {
+    background-color: var(--app-separator-color);
+}
+
+.category-name.active {
+    color: var(--app-button-color);
+    font-weight: 600;
+}

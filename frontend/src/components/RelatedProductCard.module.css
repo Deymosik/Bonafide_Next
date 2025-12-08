@@ -1,0 +1,64 @@
+/* frontend/src/components/RelatedProductCard.css */
+/* Переменные импортируются из глобального файла /src/styles/theme.css */
+
+.related-card {
+    display: flex;
+    flex-direction: column;
+    width: 140px; /* Компактная ширина */
+    flex-shrink: 0;
+    text-decoration: none;
+    color: var(--app-text-color);
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.related-card:active {
+    transform: scale(0.96);
+}
+
+.related-card-image-wrapper {
+    width: 100%;
+    padding-top: 100%; /* Делает блок квадратным */
+    position: relative;
+}
+
+.related-card-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.related-card-info {
+    padding: 8px;
+}
+
+.related-card-name {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    line-height: 1.3;
+    font-weight: 500;
+    /* Ограничение двумя строками */
+    height: 2.6em;
+    overflow: hidden;
+}
+
+.related-card-price {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+.related-card-image-placeholder {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* Используем цвет разделителя для нейтрального фона-плейсхолдера */
+    background-color: var(--app-separator-color);
+    opacity: 0.5;
+}

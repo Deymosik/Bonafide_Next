@@ -1,0 +1,35 @@
+/* frontend/src/components/BottomSheet.css */
+/* Переменные импортируются из глобального файла /src/styles/theme.css */
+.bottom-sheet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Этот цвет является функциональным и не зависит от темы */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.bottom-sheet-content {
+    background-color: var(--app-secondary-bg-color); /* Используем вторичный фон для всплывающих элементов */
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 20px calc(20px + 60px + env(safe-area-inset-bottom));
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}

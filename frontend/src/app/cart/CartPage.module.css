@@ -1,0 +1,300 @@
+/* проект/frontend/src/pages/CartPage.css */
+.cart-page {
+    padding:16px;
+}
+
+/* Стили для пустой корзины */
+.cart-page.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;     /* Центрирование по горизонтали */
+    justify-content: center; /* Центрирование по вертикали */
+    text-align: center;
+    min-height: calc(100vh - 140px);
+    padding: 20px;
+    box-sizing: border-box;
+}
+.empty-cart-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 16px 0 8px 0;
+    color: var(--app-text-color);
+}
+.empty-cart-subtitle {
+    font-size: 16px;
+    color: var(--app-hint-color);
+    max-width: 280px;
+    line-height: 1.5;
+    margin: 0 0 24px 0;
+}
+.empty-cart-button {
+    width: 100%;
+    max-width: 300px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+}
+
+/* Блок с кнопками "Выбрать все" / "Удалить" */
+.cart-actions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--app-separator-color);
+}
+.cart-actions-header .select-all-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--app-text-color);
+    cursor: pointer;
+}
+.cart-actions-header .action-buttons button {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+}
+.cart-actions-header .action-buttons button svg {
+    width: 22px;
+    height: 22px;
+    fill: var(--app-hint-color);
+}
+
+/* Список товаров в корзине */
+.cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 240px; /* Отступ для "липкого" футера */
+}
+
+.cart-item {
+    display: flex;
+    flex-direction: column; /* ГЛАВНОЕ ИЗМЕНЕНИЕ: располагаем блоки друг под другом */
+    gap: 12px; /* Расстояние между верхним блоком и кнопками +/- */
+    background-color: var(--app-secondary-bg-color);
+    padding: 16px;
+    border-radius: 16px;
+    animation: fadeIn 0.3s ease;
+}
+
+.cart-item-main {
+    display: flex;
+    gap: 16px;
+    /* Выравниваем по верху, чтобы текст красиво стоял рядом с картинкой */
+    align-items: flex-start;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.cart-item-image-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.cart-item-img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+}
+
+.cart-item-info {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.cart-item-name {
+    font-weight: 600;
+    font-size: clamp(15px, 4.5vw, 17px);
+    color: var(--app-text-color);
+    /* Убираем ограничения, позволяя тексту занимать несколько строк */
+    white-space: normal;
+    word-break: break-word; /* Для корректного переноса длинных слов */
+    line-height: 1.3;
+}
+
+.cart-item-price-container {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 8px; /* Добавляем отступ от названия */
+}
+
+.normal-price {
+    color: var(--app-text-color);
+    font-size: clamp(14px, 4vw, 15px);
+    font-weight: 500;
+}
+
+.new-price {
+    color: var(--app-button-color);
+    font-size: clamp(15px, 4.2vw, 16px);
+    font-weight: 600;
+}
+
+.old-price {
+    color: var(--app-hint-color);
+    font-size: clamp(13px, 3.8vw, 14px);
+    text-decoration: line-through;
+}
+
+.cart-item-controls {
+    display: flex;
+    align-items: center;
+    /* Располагаем его в правом углу карточки */
+    align-self: flex-end;
+    background-color: var(--app-bg-color); /* Фон как у страницы для контраста */
+    border-radius: 24px;
+    padding: 4px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* Легкая тень */
+}
+
+.cart-item-controls button {
+    width: 36px;  /* Увеличиваем область нажатия */
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background-color: transparent;
+    color: var(--app-text-color);
+    font-size: 22px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.cart-item-controls button:active {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.cart-item-controls span {
+    font-weight: 600;
+    font-size: clamp(16px, 4vw, 18px);
+    min-width: 24px; /* Чуть больше места для цифр */
+    text-align: center;
+    color: var(--app-text-color);
+}
+
+
+/* "Липкий" футер для страницы корзины */
+.sticky-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background-color: var(--app-bg-color);
+    border-top: 1px solid var(--app-secondary-bg-color);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    bottom: calc(50px + env(safe-area-inset-bottom));
+    z-index: 1;
+}
+
+.upsell-hint {
+    background-color: var(--app-secondary-bg-color);
+    color: var(--app-link-color);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.order-summary {
+    width: 100%;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    color: var(--app-text-color);
+}
+.summary-row.discount span {
+    color: var(--positive-action);
+}
+.summary-row.final-total {
+    font-size: 20px;
+    font-weight: 600;
+    border-top: 1px solid var(--app-secondary-bg-color);
+    padding-top: 12px;
+    margin-top: 4px;
+}
+
+.checkout-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+}
+
+.checkout-btn:disabled {
+    background-color: var(--app-secondary-bg-color);
+    color: var(--app-hint-color);
+    cursor: not-allowed;
+}
+
+/* Стили для чекбокса */
+.custom-checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--checkbox-border-color);
+    background-color: var(--app-bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cart-item .custom-checkbox {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    z-index: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.custom-checkbox.checked {
+    background-color: var(--app-button-color);
+    border-color: var(--app-button-color);
+}
+
+.custom-checkbox svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--app-button-text-color);
+    stroke-width: 2.5;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s ease;
+}
+
+.custom-checkbox.checked svg {
+    opacity: 1;
+    transform: scale(1);
+}

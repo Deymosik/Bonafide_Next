@@ -1,0 +1,60 @@
+/* frontend/src/components/ProductPageSkeleton.css */
+.skeleton-product-page {
+    width: 100%;
+}
+
+/* Общий класс для анимированных элементов (можно вынести в index.css, если используется везде) */
+.skeleton-item {
+    background-color: #e0e0e0;
+    border-radius: 8px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* Скелетон для слайдера */
+.skeleton-slider {
+    height: 300px;
+    border-radius: 0; /* Слайдер обычно без скруглений */
+}
+
+/* Контейнер для остальной информации */
+.skeleton-product-details {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* Расстояние между элементами */
+}
+
+/* Скелетон для текстовых строк */
+.skeleton-line {
+    height: 18px;
+    border-radius: 6px;
+}
+
+/* Размеры, имитирующие реальные элементы */
+.skeleton-h1 {
+    height: 30px;
+    width: 80%;
+}
+
+.skeleton-price-main {
+    height: 36px;
+    width: 40%;
+}
+
+/* Скелетоны для палитры цветов */
+.skeleton-swatches {
+    display: flex;
+    gap: 12px;
+}
+
+.skeleton-swatch {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+}

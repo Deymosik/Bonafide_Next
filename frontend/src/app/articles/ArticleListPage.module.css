@@ -1,0 +1,96 @@
+/* frontend/src/pages/ArticleListPage.css */
+.article-list-page {
+    padding: 16px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    color: var(--app-text-color);
+}
+
+/* 1. ИЗМЕНЕНИЕ: Стили для нового блока навигации */
+.blog-nav {
+    position: sticky;
+    top: 0;
+    background-color: var(--app-bg-color);
+    z-index: 100;
+    padding-top: 8px;
+    padding-bottom: 12px;
+}
+
+.categories-scroll-container {
+    overflow-x: auto;
+    padding-bottom: 12px; /* Отступ для тени от скроллбара */
+    margin-bottom: 12px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.categories-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.categories-scroll-inner {
+    display: flex;
+    gap: 8px;
+    padding-right: 16px; /* Чтобы последний элемент не прилипал к краю */
+}
+
+.category-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: var(--app-secondary-bg-color);
+    color: var(--app-text-color);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    border: none;
+    font-size: 15px;
+    transition: background-color 0.2s, color 0.2s;
+}
+.category-chip.active {
+    background: var(--app-button-color);
+    color: var(--app-button-text-color);
+    font-weight: 600;
+}
+
+.sort-tabs {
+    display: flex;
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.sort-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border: none;
+    background: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--app-hint-color);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+.sort-tab.active {
+    background-color: var(--app-bg-color);
+    color: var(--app-text-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Стили для сетки статей (без изменений) */
+.articles-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-top: 16px; /* Отступ от прилипающей навигации */
+}
+
+.not-found-message {
+    color: var(--app-hint-color);
+    text-align: center;
+    padding: 30px 0;
+}

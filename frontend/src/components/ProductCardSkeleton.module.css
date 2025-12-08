@@ -1,0 +1,72 @@
+/* frontend/src/components/ProductCardSkeleton.css */
+/* Переменные импортируются из глобального файла /src/styles/theme.css */
+
+.skeleton-product-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 12px;
+    overflow: hidden;
+    height: 100%;
+}
+
+.skeleton-item {
+    /* Используем цвет разделителя для "костей" скелетона */
+    background-color: var(--app-separator-color);
+    opacity: 0.5;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* 1. Имитируем контейнер для фото из ProductCard.css */
+.skeleton-image-container {
+    width: 100%;
+    padding-top: 75%; /* Соотношение сторон 4:3 */
+    position: relative; /* ВАЖНО: Делаем его точкой отсчета для панельки */
+    background-color: var(--app-separator-color);
+    animation: pulse 1.5s infinite ease-in-out; /* Контейнер тоже должен "пульсировать" */
+}
+
+.skeleton-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-title {
+    height: 38px;
+    width: 90%;
+    border-radius: 8px;
+}
+
+.skeleton-price {
+    height: 22px;
+    width: 50%;
+    border-radius: 8px;
+}
+
+/* 2. НОВЫЕ СТИЛИ для позиционирования панельки на фото */
+.skeleton-panel-on-image {
+    position: absolute; /* Позиционируем абсолютно относительно .skeleton-image-container */
+    bottom: 8px;       /* Отступ 8px от нижнего края */
+    right: 8px;        /* Отступ 8px от правого края */
+
+    height: 20px;
+    width: 70px;
+    border-radius: 6px;
+    /* Используем цвет подсказок, чтобы панелька была темнее фона фото */
+    background-color: var(--app-hint-color);
+}
+
+
+@keyframes pulse {
+    0% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 0.5;
+    }
+}

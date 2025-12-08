@@ -1,0 +1,21 @@
+{
+  "name": "BonaFide55 Store",
+  "short_name": "BonaFide55",
+  "description": "Лучший магазин аксессуаров и гаджетов",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

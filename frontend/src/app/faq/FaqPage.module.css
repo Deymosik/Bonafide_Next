@@ -1,0 +1,141 @@
+/* frontend/src/pages/FaqPage.css */
+/* Переменные (--app-bg-color, --app-text-color и др.)
+   импортируются из глобального файла /src/styles/theme.css */
+
+.faq-page {
+    padding:16px 16px 32px;
+}
+
+.faq-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 24px 0;
+    color: var(--app-text-color);
+}
+
+/* --- КОНТЕЙНЕР ДЛЯ БЛОКА С ВКЛАДКАМИ --- */
+.info-tabs-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--app-secondary-bg-color); /* Использовали secondary-bg как разделитель */
+}
+
+/* --- СЕГМЕНТИРОВАННЫЙ КОНТРОЛ (ПЕРЕКЛЮЧАТЕЛЬ) --- */
+.segmented-control {
+    display: flex;
+    background-color: var(--app-secondary-bg-color); /* Можно использовать secondary-bg для фона контрола */
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+}
+
+.segment-button {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background-color: transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--app-hint-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.segment-button.active {
+    background-color: var(--app-bg-color);
+    color: var(--app-text-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Тень пока оставим, она не связана с переменными напрямую */
+}
+
+/* --- КОНТЕЙНЕР ДЛЯ КОНТЕНТА ВКЛАДОК --- */
+.content-container {
+    position: relative;
+    min-height: 150px; /* Минимальная высота, чтобы не было "прыжков" */
+}
+
+.content-tab {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- СТИЛИ ДЛЯ ИНФО-СЕКЦИЙ ВНУТРИ ВКЛАДОК --- */
+.info-section-content {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-color-secondary); /* Используем локальную secondary, если не хотим, чтобы зависело от темы TG */
+}
+.info-section-placeholder {
+    color: var(--app-hint-color);
+    padding: 20px 0;
+    text-align: center;
+}
+.info-section-content :global(p) { margin: 0 0 1.2em 0; }
+.info-section-content :global(p:last-child) { margin-bottom: 0; }
+.info-section-content :global(ul), .info-section-content :global(ol) { padding-left: 20px; margin: 0 0 1.2em 0; }
+.info-section-content :global(a) {
+    color: var(--app-link-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+.info-section-content :global(a:hover) { text-decoration: underline; }
+
+/* --- ОБЩИЙ ЗАГОЛОВОК ДЛЯ СЕКЦИЙ FAQ И КОНТАКТОВ --- */
+.info-section-title {
+    font-size: 20px;
+    text-align: center;
+    font-weight: 600;
+    margin: 0 0 16px 0; /* Увеличили нижний отступ */
+    color: var(--app-text-color);
+}
+
+/* --- КОНТЕЙНЕР ДЛЯ АККОРДЕОНА FAQ --- */
+.faq-accordion-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--app-secondary-bg-color); /* Использовали secondary-bg как разделитель */
+}
+
+.faq-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.faq-skeleton {
+    width: 100%;
+    height: 57px;
+    background-color: var(--app-secondary-bg-color); /* Скелетон также использует secondary-bg */
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+/* --- БЛОК С КОНТАКТАМИ --- */
+.contacts-section {
+    /* Убрали отступы, так как они теперь у родительских блоков */
+}
+
+.contacts-content p {
+    font-size: 15px;
+    color: var(--app-hint-color);
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+    text-align: center;
+}
+
+.contact-button {
+    display: block;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+}

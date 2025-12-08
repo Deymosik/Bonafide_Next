@@ -1,0 +1,537 @@
+/* frontend/src/pages/ProductPage.css */
+/* Переменные импортируются из глобального файла /src/styles/theme.css */
+
+.product-page {
+    padding-bottom: 80px; /* Оставляем место для липкой кнопки */
+}
+
+.loader {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+}
+
+.product-details {
+    padding: 0 16px;
+    /* Добавляем это свойство, чтобы карточка с отрицательным margin-top
+       корректно отображалась поверх галереи */
+    position: relative;
+    z-index: 1;
+}
+
+.product-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 4px 0; /* Уменьшили нижний отступ до 4px */
+    line-height: 1.2;
+}
+
+.price-section-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Новая (акционная) цена - делаем ее большой и заметной */
+.price-main-current {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--app-button-color);
+}
+
+/* Обычная цена (когда нет скидки) */
+.price-main-regular {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--app-text-color);
+}
+
+/* Старая (зачеркнутая) цена */
+.price-main-old {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--app-hint-color);
+    text-decoration: line-through;
+}
+
+/* Значок с процентом скидки */
+.discount-badge-page {
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color); /* Белый текст хорошо контрастирует с красным фоном */
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.info-panels-product {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+/* Код для .info-panel уже должен быть в другом файле, но на всякий случай */
+.info-panel {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+
+.product-section {
+    margin-top: 24px;
+}
+
+.product-section h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--app-separator-color);
+}
+
+.spec-list {
+    list-style: none;
+    padding: 0;
+}
+
+.spec-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--app-separator-color);
+}
+
+.spec-list li:last-child {
+    border-bottom: none;
+}
+
+/* Стили для липкого футера */
+.product-page .sticky-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px;
+    background-color: var(--app-bg-color);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    /* Анимация для плавного появления */
+    transition: all 0.3s ease-in-out;
+    z-index: 1;
+}
+
+/* Старая кнопка "Добавить в корзину" */
+.add-to-cart-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+}
+
+
+/* НОВЫЕ СТИЛИ ДЛЯ РАЗДЕЛЕННОЙ КНОПКИ */
+
+/* Контейнер для двух новых кнопок */
+.cart-controls-container {
+    display: flex;
+    gap: 12px;
+    align-items: stretch; /* Растягиваем элементы на всю высоту */
+}
+
+/* Кнопка-ссылка "В корзине" */
+.go-to-cart-btn {
+    /* Занимает все доступное пространство */
+    flex-grow: 1;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+}
+
+/* Контейнер для степпера "+/-" */
+.quantity-stepper {
+    display: flex;
+    align-items: center;
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 12px;
+}
+
+/* Кнопки "+" и "-" */
+.quantity-btn {
+    width: 48px; /* Фиксированная ширина для удобного нажатия */
+    height: 100%;
+    border: none;
+    background-color: transparent;
+    color: var(--app-button-color); /* Делаем кнопки в цвет акцента */
+    font-size: 24px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.quantity-btn:active {
+    background-color: rgba(0,0,0,0.1); /* Легкий эффект при нажатии */
+}
+
+/* Отображение количества */
+.quantity-display {
+    padding: 0 8px; /* Небольшие отступы по бокам */
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--app-text-color);
+}
+
+/* Стили для аудиоплеера */
+.audio-player {
+    width: 100%;
+    margin-top: 8px;
+}
+
+/* Контейнер для горизонтального скролла (остается почти без изменений) */
+.info-cards-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 4px 0 12px 0;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.info-cards-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Новая прямоугольная карточка */
+.info-card-rectangle {
+    display: flex; /* Располагаем элементы (картинка, текст) в ряд */
+    align-items: center; /* Выравниваем по центру по вертикали */
+
+    /* Задаем размер прямоугольника */
+    width: 280px; /* Делаем карточку значительно шире */
+    height: 100px;
+    flex-shrink: 0; /* Предотвращает сжатие карточек */
+
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--app-text-color);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease;
+}
+
+.info-card-rectangle:active {
+    transform: scale(0.97);
+}
+
+/* Изображение внутри карточки (теперь слева) */
+.info-card-image-rect {
+    width: 100px; /* Фиксированная ширина для картинки */
+    height: 100px;
+    object-fit: cover;
+    flex-shrink: 0; /* Картинка не будет сжиматься */
+}
+
+/* Контейнер для текстового содержимого (справа) */
+.info-card-text-content {
+    flex-grow: 1; /* Занимает все оставшееся место */
+    padding: 12px;
+    /* Важно для работы text-overflow */
+    overflow: hidden;
+}
+
+/* Заголовок (теперь с возможностью переноса) */
+.info-card-title-rect {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+
+    /* Магия для переноса текста на несколько строк с многоточием */
+    line-height: 1.3;
+    max-height: 3.9em; /* 1.3em * 3 строки. Позволяет отобразить до 3 строк текста */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3; /* Ограничиваем 3 строками */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.related-products-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 4px 0 12px 0;
+    /* Убираем скроллбар */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.related-products-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Добавляем анимированное появление для секции */
+.related-section {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Контейнер для палитры цветов */
+.color-swatches-container {
+    display: flex;
+    gap: 12px;
+    padding: 0;
+    /* Можно добавить горизонтальный скролл, если цветов будет очень много */
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.color-swatches-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Сам "квадратик" с цветом */
+.color-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px; /* Слегка скругленные углы */
+    border: 2px solid transparent; /* Прозрачная рамка для выравнивания */
+    padding: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.color-swatch:active {
+    transform: scale(0.9);
+}
+
+/* Стиль для активного, текущего цвета */
+.color-swatch.active {
+    border-color: var(--app-button-color); /* Рамка в цвет акцента темы */
+    cursor: default; /* Убираем курсор-руку, т.к. на него нельзя нажать */
+}
+.color-swatch.active:active {
+    transform: none; /* Убираем анимацию нажатия для активного */
+}
+
+/* Картинка внутри квадратика */
+.color-swatch img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.product-page.switching-color {
+    opacity: 0.6;
+    pointer-events: none; /* Блокируем клики во время загрузки */
+    transition: opacity 0.2s ease-in-out;
+}
+
+.product-page.switching-color {
+    opacity: 0.6; /* Делаем контент полупрозрачным */
+    /* Запрещаем взаимодействие с элементами во время загрузки, чтобы избежать двойных кликов */
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Стили для контента описания, сгенерированного из CKEditor */
+.product-description-content p {
+    margin: 0 0 1em 0;
+    line-height: 1.6;
+}
+.product-description-content p:last-child {
+    margin-bottom: 0;
+}
+
+.product-description-content ul,
+.product-description-content ol {
+    padding-left: 20px;
+    margin: 0 0 1em 0;
+}
+
+.product-description-content a {
+    color: var(--app-link-color);
+    text-decoration: none;
+}
+.product-description-content a:hover {
+    text-decoration: underline;
+}
+
+.product-description-content strong {
+    font-weight: 600;
+}
+
+
+.product-title-header {
+    justify-content: space-between;
+    align-items: flex-start; /* Выравниваем по верху */
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+/* Стили для кнопки "лайк" на странице товара */
+.favorite-button-page {
+    /* Отменяем абсолютное позиционирование */
+    position: static;
+
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+
+    /* Делаем фон в цвет второстепенного фона страницы */
+    background-color: var(--app-secondary-bg-color);
+}
+
+.favorite-button-page.active svg {
+    /* Для активного лайка лучше подходит "разрушительный" (красный) цвет */
+    fill: var(--app-destructive-text-color);
+}
+
+.favorite-button-page:not(.active) svg {
+    fill: var(--app-text-color); /* Неактивный цвет как у текста */
+}
+
+.product-header-card {
+    background-color: var(--app-secondary-bg-color);
+    padding: 16px;
+    margin-bottom: 24px;
+    margin-top: 16px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.08); /* Тень теперь направлена вверх */
+    border-radius: 16px;
+}
+
+/* 2. Стилизуем заголовок внутри новой карточки */
+.product-header-card .product-title {
+    font-size: 22px; /* Чуть компактнее */
+    font-weight: 600;
+    margin: 0; /* Убираем все отступы */
+    line-height: 1.3;
+}
+
+/* 3. Контейнер для инфо-панелей (размещаем их перед заголовком) */
+.product-header-card .info-panels-product {
+    margin-bottom: 12px; /* Отступ от заголовка */
+    gap: 8px; /* Немного увеличим расстояние между панелями */
+}
+
+/* 4. Секция с выбором цвета */
+.color-swatches-section {
+    margin-top: 16px; /* Отступ от заголовка */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-swatches-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--app-hint-color); /* Приглушенный цвет для подписи */
+}
+
+/* 5. Обновляем стили для блока с ценой */
+.product-header-card .price-section-main {
+    margin: 20px 0 0 0; /* Отступ сверху, убираем остальные */
+    padding-top: 20px;
+    /* Добавляем линию-разделитель для визуального отделения */
+    border-top: 1px solid var(--app-separator-color);
+}
+
+/* Стили для блока Артикула */
+.sku-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0; /* Убираем padding, теперь это просто строка текста */
+    background-color: transparent; /* Убираем фон */
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--app-hint-color); /* Серый цвет текста */
+    transition: opacity 0.2s;
+}
+
+.sku-container:active {
+    background-color: var(--app-separator-color);
+}
+
+.sku-value {
+    font-family: monospace; /* Моноширинный шрифт для цифр выглядит профессионально */
+    font-weight: 600;
+    color: var(--app-hint-color);
+}
+
+.copy-icon {
+    opacity: 0.5;
+}
+
+.sku-copied-badge {
+    font-size: 11px;
+    color: var(--positive-action); /* Зеленый цвет */
+    font-weight: 600;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.spec-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.spec-list li {
+    /* Включаем Flexbox, чтобы разнести название и значение по краям */
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline; /* Выравнивание по базовой линии текста */
+
+    padding: 10px 0;
+    border-bottom: 1px solid var(--app-separator-color);
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.spec-list li:last-child {
+    border-bottom: none;
+}
+
+/* Модификатор для простого списка (например, функционал), где не нужно разносить по краям */
+.spec-list.simple li {
+    justify-content: flex-start;
+}
+
+/* Название характеристики (слева) */
+.spec-name {
+    color: var(--app-hint-color); /* Серый цвет */
+    padding-right: 16px;
+    flex: 1; /* Занимает доступное пространство */
+}
+
+/* Значение характеристики (справа) */
+.spec-value {
+    font-weight: 500;
+    text-align: right;
+    color: var(--app-text-color);
+    max-width: 50%; /* Не даем значению занимать больше половины строки */
+    word-wrap: break-word;
+}
+

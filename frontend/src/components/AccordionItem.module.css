@@ -1,0 +1,85 @@
+/* frontend/src/components/AccordionItem.css */
+/* Переменные импортируются из глобального файла /src/styles/theme.css */
+
+.accordion-item-wrapper {
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.accordion-header {
+    width: 100%;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--app-text-color);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.accordion-arrow {
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--app-hint-color);
+    transition: transform 0.3s ease;
+    transform: rotate(90deg);
+}
+
+.accordion-arrow.open {
+    transform: rotate(-90deg);
+}
+
+.accordion-answer-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+}
+
+.accordion-answer-panel.open {
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.5s ease-in, opacity 0.3s ease-in;
+}
+
+/* Внутренний блок для отступов */
+.accordion-content-inner {
+    padding: 0 16px 16px 16px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--app-text-color);
+}
+
+/* --- Стили для контента (HTML из редактора) --- */
+/* Оставляем только общие стили для тегов, удаляем .spec-list */
+
+.accordion-content-inner :global(p),
+.accordion-content-inner :global(ul),
+.accordion-content-inner :global(ol) {
+    margin: 0 0 1em 0;
+}
+
+/* Убираем отступ у последнего элемента, чтобы не было дырки снизу */
+.accordion-content-inner > *:last-child {
+    margin-bottom: 0;
+}
+
+.accordion-content-inner :global(a) {
+    color: var(--app-link-color);
+    text-decoration: none;
+}
+.accordion-content-inner :global(a:hover) {
+    text-decoration: underline;
+}
+
+/*
+   ВАЖНО: Я удалил отсюда блоки .spec-list, .spec-list li, .spec-name, .spec-value.
+   Теперь они живут в ProductPage.module.css и корректно применяются к странице товара.
+*/

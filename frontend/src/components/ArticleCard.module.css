@@ -1,0 +1,62 @@
+/* frontend/src/components/ArticleCard.css */
+.article-card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.article-card {
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.article-card:active {
+    transform: scale(0.98);
+}
+
+.article-card-image-wrapper {
+    width: 100%;
+    padding-top: 56.25%; /* Соотношение сторон 16:9 */
+    position: relative;
+    background-color: var(--app-separator-color);
+}
+
+.article-card-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.article-card-info {
+    padding: 16px;
+}
+
+.article-card-category {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--app-button-color);
+}
+
+.article-card-title {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.4;
+    /* Ограничение двумя строками */
+    height: 2.8em;
+    overflow: hidden;
+}
+
+.article-card-date {
+    margin: 0;
+    font-size: 14px;
+    color: var(--app-hint-color);
+}

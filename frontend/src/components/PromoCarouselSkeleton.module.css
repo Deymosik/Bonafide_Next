@@ -1,0 +1,39 @@
+/* проект/frontend/src/components/PromoCarouselSkeleton.css */
+
+/* --- КОНТЕЙНЕР --- */
+/* Этот контейнер ПОЛНОСТЬЮ повторяет стили .promo-carousel-container */
+.promo-carousel-skeleton-container {
+    display: flex;
+    gap: 12px;
+    padding: 0 12px; /* Важно: те же отступы, что и у оригинала */
+    overflow: hidden; /* Скелетонам не нужен скролл */
+}
+
+/* --- КАРТОЧКА-СКЕЛЕТОН --- */
+/* Эта карточка ПОЛНОСТЬЮ повторяет размеры .promo-card */
+.promo-card-skeleton {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+    border-radius: 16px;
+
+    /* Стили для "серой" плашки */
+    background-color: var(--tg-theme-secondary-bg-color, #f1f1f1);
+
+    /* Анимация пульсации для эффекта загрузки */
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* --- АНИМАЦИЯ ПУЛЬСАЦИИ --- */
+/* Эту анимацию можно вынести в глобальный index.css, если скелетоны используются часто */
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.6;
+    }
+}
