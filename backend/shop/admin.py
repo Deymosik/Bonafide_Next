@@ -611,8 +611,8 @@ class BackupAdmin(admin.ModelAdmin):
                 # 2. Восстанавливаем базу данных
                 json_data = zip_file.read('db_dump.json').decode('utf-8')
 
-                # Создаем временный файл, так как loaddata требует путь к файлу
-                temp_file_path = os.path.join(settings.BASE_DIR, 'temp_restore.json')
+                # Сохраняем во временную папку или в media, где есть права на запись
+                temp_file_path = os.path.join(settings.MEDIA_ROOT, 'temp_restore.json')
                 with open(temp_file_path, 'w') as tmp_file:
                     tmp_file.write(json_data)
 
