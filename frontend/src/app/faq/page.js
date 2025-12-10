@@ -1,4 +1,5 @@
 // src/app/faq/page.js
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import FaqPageClient from '@/components/FaqPageClient';
 // Импортируем наши централизованные утилиты

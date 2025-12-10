@@ -1,4 +1,5 @@
 // src/app/legal/[type]/page.js
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import { notFound } from 'next/navigation';
 import LegalPageClient from '@/components/LegalPageClient';

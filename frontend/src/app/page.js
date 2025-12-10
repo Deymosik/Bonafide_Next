@@ -1,4 +1,5 @@
 // src/app/page.js
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import HomePageClient from '@/components/HomePageClient';
 // Импортируем наши новые серверные утилиты

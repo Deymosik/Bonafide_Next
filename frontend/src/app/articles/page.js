@@ -1,4 +1,5 @@
 // src/app/articles/page.js
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import ArticleListClient from '@/components/ArticleListClient';
 // Импортируем наши серверные утилиты

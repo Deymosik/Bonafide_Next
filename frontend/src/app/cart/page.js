@@ -1,4 +1,5 @@
 // src/app/cart/page.js
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import CartPageClient from '@/components/CartPageClient';
 // Импортируем утилиты для получения настроек с бэкенда

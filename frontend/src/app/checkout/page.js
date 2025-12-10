@@ -1,4 +1,5 @@
 // src/app/checkout/page.js
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import CheckoutPageClient from '@/components/CheckoutPageClient';
 import { getShopSettings, replaceSeoVariables } from '@/lib/serverUtils';

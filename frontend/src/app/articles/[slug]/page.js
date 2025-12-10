@@ -1,4 +1,5 @@
 // src/app/articles/[slug]/page.js
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
 import ArticlePageClient from '@/components/ArticlePageClient';
