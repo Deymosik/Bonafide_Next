@@ -124,15 +124,21 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',')
 
 
 # --- Настройки для работы за Reverse Proxy (Nginx) в Production ---
-# Этот блок — ключ к исправлению ошибок CSRF и HTTPS.
-
 if not DEBUG:
+    # 1. Говорим Django, что мы за Nginx и используем HTTPS
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    # 2. Говорим использовать домен из заголовка (bf55.ru), а не localhost
     USE_X_FORWARDED_HOST = True
+
+    # 3. ВАЖНО: Говорим использовать порт из заголовка (443), а не 8000
+    USE_X_FORWARDED_PORT = True
+
+    # 4. Безопасность кук (только через HTTPS)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-    # Доверенные источники для CSRF. Используем ту же переменную, что и для CORS.
+    # 5. Доверенные источники для CSRF
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',') if origin]
 
 
