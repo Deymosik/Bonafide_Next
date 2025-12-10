@@ -22,13 +22,8 @@ const SERVER_API_URL = getServerApiUrl();
 export async function fetchServerData(endpoint) {
     try {
         const res = await fetch(`${SERVER_API_URL}${endpoint}`, {
+            // В Docker сборке важно не кешировать ошибки, поэтому no-store
             cache: 'no-store',
-            headers: {
-                // ВАЖНО: Обманываем Django, говоря, что запрос пришел с публичного домена.
-                // Это заставит его генерировать ссылки вида https://bf55.ru/media/...
-                'Host': 'bf55.ru',
-                'X-Forwarded-Proto': 'https', // На всякий случай говорим, что это HTTPS
-            }
         });
 
         if (!res.ok) {
