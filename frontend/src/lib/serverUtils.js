@@ -1,7 +1,20 @@
 // frontend/src/lib/serverUtils.js
 
-// URL для серверных запросов (внутри Docker сети или локально)
-const SERVER_API_URL = process.env.INTERNAL_API_URL || 'http://127.0.0.1:8000/api';
+// Определяем правильный URL
+const getServerApiUrl = () => {
+    // 1. Если задана специальная переменная (в Dockerfile)
+    if (process.env.INTERNAL_API_URL) {
+        return process.env.INTERNAL_API_URL;
+    }
+    // 2. Если мы в продакшене (внутри Docker), но переменной нет -> идем к соседу
+    if (process.env.NODE_ENV === 'production') {
+        return 'http://backend:8000/api';
+    }
+    // 3. Иначе (локальная разработка npm run dev) -> localhost
+    return 'http://127.0.0.1:8000/api';
+};
+
+const SERVER_API_URL = getServerApiUrl();
 
 /**
  * Универсальная функция для получения данных с API на сервере
@@ -9,8 +22,8 @@ const SERVER_API_URL = process.env.INTERNAL_API_URL || 'http://127.0.0.1:8000/ap
 export async function fetchServerData(endpoint) {
     try {
         const res = await fetch(`${SERVER_API_URL}${endpoint}`, {
-            cache: 'no-store', // Всегда свежие данные
-            // next: { revalidate: 60 } // Можно включить кэширование на 60 сек, если нужно снизить нагрузку
+            // В Docker сборке важно не кешировать ошибки, поэтому no-store
+            cache: 'no-store',
         });
 
         if (!res.ok) {
@@ -20,7 +33,7 @@ export async function fetchServerData(endpoint) {
         }
         return res.json();
     } catch (error) {
-        console.error(`Network error ${endpoint}:`, error);
+        console.error(`Network error ${endpoint} (${SERVER_API_URL}):`, error.message);
         return null;
     }
 }
