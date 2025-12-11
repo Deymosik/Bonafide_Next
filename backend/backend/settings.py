@@ -167,7 +167,15 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 #STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
+
+# Если мы в продакшене (DEBUG=False), мы жестко задаем публичный домен для медиа
+if not DEBUG:
+    # Важно: это заставит Django генерировать абсолютные ссылки (https://bf55.ru/media/...)
+    # вместо относительных (/media/...)
+    MEDIA_URL = f'https://{os.environ.get("ALLOWED_HOSTS_STR", "bf55.ru").split(",")[0]}/media/'
+else:
+    MEDIA_URL = '/media/'
+
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
