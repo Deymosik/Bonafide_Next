@@ -10,6 +10,11 @@ const nextConfig = {
     images: {
         remotePatterns: [
             {
+                protocol: 'https',
+                hostname: 'bf55.ru',
+                pathname: '/media/**', // Ограничиваем только папкой media для безопасности
+            },
+            {
                 protocol: 'http',
                 hostname: '127.0.0.1',
                 port: '8000',
