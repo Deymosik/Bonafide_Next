@@ -23,9 +23,9 @@ export const metadata = {
     description: "Магазин аксессуаров в Telegram",
     manifest: '/manifest.json',
     icons: {
-        icon: '/icon.png',
-        shortcut: '/icon.png',
-        apple: '/icon.png',
+        icon: '/icon.png?v=5',      // Добавили версию для сброса кеша
+        shortcut: '/icon.png?v=5',
+        apple: '/icon.png?v=5',     // Для iPhone
     },
     openGraph: {
         type: 'website',
