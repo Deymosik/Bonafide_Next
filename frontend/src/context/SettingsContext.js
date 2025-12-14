@@ -21,15 +21,12 @@ export const SettingsProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        console.log("📡 [SettingsContext] Начинаем загрузку настроек...");
 
         apiClient.get('/settings/')
             .then(response => {
-                console.log("✅ [SettingsContext] Настройки получены:", response.data);
                 setSettings(response.data);
             })
             .catch(error => {
-                console.error("❌ [SettingsContext] Ошибка загрузки:", error);
                 // Устанавливаем безопасные дефолтные значения, чтобы сайт не сломался
                 setSettings({
                     site_name: 'BonaFide55',
