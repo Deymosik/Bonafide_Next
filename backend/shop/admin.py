@@ -357,8 +357,9 @@ class CartItemInline(admin.TabularInline):
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
+
     list_display = ('telegram_id', 'created_at', 'updated_at')
-    search_fields = ('telegram_id',)
+    search_fields = ('telegram_id', 'session_key',)
     inlines = [CartItemInline]
     readonly_fields = ('telegram_id', 'created_at', 'updated_at')
 

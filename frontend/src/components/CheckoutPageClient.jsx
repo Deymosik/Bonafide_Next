@@ -8,7 +8,7 @@ import { useForm, Controller, useWatch } from 'react-hook-form';
 import { IMaskInput } from 'react-imask';
 
 import { useCart } from '@/context/CartContext';
-import { useTelegram } from '@/utils/telegram'; // Используем новый хук
+import { useTelegram } from '@/utils/telegram';
 import { useSettings } from '@/context/SettingsContext';
 import apiClient from '@/lib/api';
 
@@ -20,7 +20,6 @@ import SdekIcon from '@/assets/sdek-icon.svg';
 import styles from '../app/checkout/CheckoutPage.module.css';
 
 export default function CheckoutPage() {
-    // 1. Деструктурируем безопасные методы из нашего нового хука
     const {
         user,
         showAlert,
@@ -31,7 +30,7 @@ export default function CheckoutPage() {
 
     const settings = useSettings();
     const router = useRouter();
-    const { cartItems, selectedItems, selectionInfo, deleteSelectedItems, clearCart } = useCart();
+    const { cartItems, selectedItems, selectionInfo, deleteSelectedItems } = useCart();
 
     const [isAgreed, setIsAgreed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,28 +43,27 @@ export default function CheckoutPage() {
     } = useForm({
         mode: 'onChange',
         defaultValues: {
-            // Берем данные из безопасного объекта user (из хука)
-            firstName: user?.first_name ?? '',
-            lastName: user?.last_name ?? '',
+            // ИЗМЕНЕНИЕ: Используем || вместо ?? для корректной обработки null/undefined
+            firstName: user?.first_name || '',
+            lastName: user?.last_name || '',
             delivery_method: 'Почта России'
         }
     });
 
     const deliveryMethod = useWatch({ control, name: 'delivery_method' });
 
-    // Настройка кнопки "Назад" (теперь через безопасную обертку)
     useEffect(() => {
-        BackButton.show();
-        const handleBackClick = () => router.replace('/cart');
-        BackButton.onClick(handleBackClick);
-
-        return () => {
-            BackButton.offClick(handleBackClick);
-            BackButton.hide();
-        };
+        if (BackButton) {
+            BackButton.show();
+            const handleBackClick = () => router.replace('/cart');
+            BackButton.onClick(handleBackClick);
+            return () => {
+                BackButton.offClick(handleBackClick);
+                BackButton.hide();
+            };
+        }
     }, [BackButton, router]);
 
-    // Проверка, есть ли товары для заказа
     useEffect(() => {
         if (selectedItems.size === 0) {
             router.replace('/cart');
@@ -103,8 +101,11 @@ export default function CheckoutPage() {
             deliveryInfo = `📦 **СДЭК**\n🏙 Город: ${formData.cdek_city}\n📍 ПВЗ: ${formData.cdek_office_address}`;
         }
 
+        // ИЗМЕНЕНИЕ: Добавляем пометку, откуда пришел заказ
+        const sourceLabel = user ? 'Telegram' : 'Web Сайт';
+
         return `
-🆕 **НОВЫЙ ЗАКАЗ**
+🆕 **НОВЫЙ ЗАКАЗ (${sourceLabel})**
 
 👤 **Клиент:** ${formData.lastName} ${formData.firstName} ${formData.patronymic || ''}
 📞 **Телефон:** ${formData.phone}
@@ -145,34 +146,36 @@ ${summary}
         try {
             await apiClient.post('/orders/create/', orderData);
 
-            const message = generateTelegramMessage(formData);
-            const managerUsername = settings?.manager_username || 'username';
-            const telegramLink = `https://t.me/${managerUsername}?text=${encodeURIComponent(message)}`;
+            // ИЗМЕНЕНИЕ: Открываем Telegram только если пользователь пришел оттуда
+            if (user) {
+                const message = generateTelegramMessage(formData);
+                const managerUsername = settings?.manager_username || 'username';
+                const telegramLink = `https://t.me/${managerUsername}?text=${encodeURIComponent(message)}`;
 
-            // Очищаем заказанные товары
+                openTelegramLink(telegramLink);
+                // Закрываем приложение (только в Telegram)
+                setTimeout(() => {
+                    onClose();
+                }, 500);
+            } else {
+                // Если это веб-пользователь, просто показываем уведомление
+                // В будущем здесь можно сделать редирект на страницу "Спасибо за заказ"
+                showAlert("Заказ успешно оформлен! Наш менеджер свяжется с вами.");
+
+                // Очищаем корзину и перенаправляем на главную через паузу
+                setTimeout(() => {
+                    router.push('/');
+                }, 2000);
+            }
+
             deleteSelectedItems();
-            // Или clearCart(), если нужно очистить всё, но лучше deleteSelectedItems
-
-            // 2. Используем безопасный метод открытия ссылки
-            openTelegramLink(telegramLink);
-
-            // 3. Показываем сообщение и закрываем (работает и в браузере, и в ТГ)
-            showAlert("Заказ успешно оформлен! Переходим к чату с менеджером.");
-
-            // Даем немного времени пользователю прочитать алерт (в браузере алерт блокирующий, в тг - нет)
-            setTimeout(() => {
-                onClose();
-            }, 500);
 
         } catch (error) {
             console.error("Order creation failed:", error);
-
             let errorMessage = 'Произошла ошибка при создании заказа.';
             if (error.response?.data) {
                 errorMessage += '\n' + JSON.stringify(error.response.data, null, 2);
             }
-
-            // 4. Используем безопасный алерт
             showAlert(errorMessage);
         } finally {
             setIsSubmitting(false);

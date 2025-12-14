@@ -426,8 +426,13 @@ class ShopImage(models.Model):
         ordering = ['order']
 
 class Cart(models.Model):
-    """Модель корзины, привязанная к пользователю Telegram."""
-    telegram_id = models.BigIntegerField("Telegram ID пользователя", unique=True, db_index=True)
+    """
+    Модель корзины.
+    Может быть привязана к Telegram ID (если пользователь зашел через ТГ)
+    ИЛИ к Session Key (для обычного браузера).
+    """
+    telegram_id = models.BigIntegerField("Telegram ID пользователя", unique=True, null=True, blank=True, db_index=True)
+    session_key = models.CharField("Session Key (UUID)", max_length=64, unique=True, null=True, blank=True, db_index=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
 
@@ -467,7 +472,8 @@ class Order(models.Model):
         COMPLETED = 'completed', 'Выполнен'
         CANCELED = 'canceled', 'Отменен'
 
-    telegram_id = models.BigIntegerField("Telegram ID пользователя", db_index=True)
+    telegram_id = models.BigIntegerField("Telegram ID пользователя", null=True, blank=True, db_index=True)
+    session_key = models.CharField("Session Key", max_length=64, null=True, blank=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     status = models.CharField("Статус заказа", max_length=20, choices=OrderStatus.choices, default=OrderStatus.NEW)
 

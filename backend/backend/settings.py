@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import dj_database_url
+from corsheaders.defaults import default_headers
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -115,6 +116,10 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': [],
 }
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-session-id',
+]
 
 # Разрешенные источники для CORS. Читаются из .env файла.
 # Пример для .env: CORS_ALLOWED_ORIGINS_STR=https://bf55.ru,https://www.bf55.ru

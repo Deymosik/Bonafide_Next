@@ -23,7 +23,7 @@ export const CartProvider = ({ children }) => {
     });
 
     const { user } = useTelegram();
-    const userId = user?.id;
+    // userId больше не обязателен для работы корзины, но может пригодиться для аналитики
 
     const totalItems = useMemo(() =>
             cartItems.reduce((sum, item) => sum + item.quantity, 0),
@@ -58,19 +58,23 @@ export const CartProvider = ({ children }) => {
     }, [cartItems, selectedItems, debouncedCalculate]);
 
     // Инициализация корзины
+    // ИЗМЕНЕНИЕ: Загружаем корзину всегда при монтировании компонента.
+    // Авторизация (Telegram или Session ID) теперь обрабатывается автоматически в apiClient.
     useEffect(() => {
-        if (userId || process.env.NODE_ENV === 'development') {
-            setLoading(true);
-            apiClient.get('/cart/')
-                .then(res => {
-                    const items = res.data.items || [];
-                    setCartItems(items);
-                    setSelectedItems(new Set(items.map(i => i.product.id)));
-                })
-                .catch(err => console.error("Cart load error:", err))
-                .finally(() => setLoading(false));
-        }
-    }, [userId]);
+        setLoading(true);
+        apiClient.get('/cart/')
+            .then(res => {
+                const items = res.data.items || [];
+                setCartItems(items);
+                // По умолчанию выбираем все товары, которые пришли с сервера
+                setSelectedItems(new Set(items.map(i => i.product.id)));
+            })
+            .catch(err => {
+                console.error("Cart load error:", err);
+                // Если корзины нет (например, первый заход без товаров), это не критичная ошибка
+            })
+            .finally(() => setLoading(false));
+    }, []); // Пустой массив зависимостей = запуск 1 раз при старте
 
     // --- OPTIMISTIC UPDATE LOGIC ---
 
@@ -104,7 +108,7 @@ export const CartProvider = ({ children }) => {
             } else {
                 // Новый товар
                 const newItem = {
-                    id: Date.now(), // Временный ID для ключа
+                    id: Date.now(), // Временный ID для ключа React (заменится на ID сервера при перезагрузке)
                     product,
                     quantity: 1,
                     original_price: product.price // Предполагаем, что это текущая цена

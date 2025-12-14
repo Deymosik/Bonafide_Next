@@ -310,8 +310,8 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields = ('id', 'telegram_id', 'items', 'updated_at')
-        read_only_fields = ('id', 'telegram_id', 'updated_at')
+        fields = ('id', 'telegram_id', 'session_key', 'items', 'updated_at')
+        read_only_fields = ('id', 'telegram_id', 'session_key', 'updated_at')
 
 
 class DetailedCartItemSerializer(serializers.Serializer):
@@ -341,7 +341,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        # ИЗМЕНЕНИЕ: Поле 'region' удалено из списка
         fields = (
             'first_name', 'last_name', 'patronymic', 'phone',
             'delivery_method',
@@ -351,7 +350,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         )
         extra_kwargs = {
             'city': {'required': False},
-            # 'region': {'required': False}, # ИЗМЕНЕНИЕ: Удалено
             'district': {'required': False},
             'street': {'required': False},
             'house': {'required': False},
@@ -367,14 +365,21 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if not calculation_results:
              raise serializers.ValidationError("Не удалось рассчитать стоимость заказа.")
 
+        # --- ИЗМЕНЕНИЯ ЗДЕСЬ ---
+        # Получаем данные идентификации из контекста (переданного во view)
+        tg_id = self.context.get('telegram_id')
+        session_key = self.context.get('session_key')
+
         order = Order.objects.create(
             **validated_data,
-            telegram_id=self.context.get('telegram_id'),
+            telegram_id=tg_id,       # Может быть None, если заказ с сайта
+            session_key=session_key, # Сохраняем сессию браузера
             subtotal=calculation_results['subtotal'],
             discount_amount=calculation_results['discount_amount'],
             final_total=calculation_results['final_total'],
             applied_rule=calculation_results['applied_rule']
         )
+        # -----------------------
 
         for item_data in items_data:
             product_info = next(
@@ -392,7 +397,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             )
 
         return order
-
 
 class AuthorSerializer(serializers.ModelSerializer):
     """Сериализатор для краткой информации об авторе."""

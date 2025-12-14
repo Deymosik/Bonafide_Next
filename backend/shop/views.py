@@ -5,6 +5,10 @@ from django.utils import timezone
 from django.db.models import Prefetch
 from django.db.models import F
 from django.db import transaction
+from urllib.parse import parse_qsl  # Добавлено, так как используется в parse_init_data
+import hmac # Добавлено
+import hashlib # Добавлено
+import json # Добавлено
 
 from decimal import Decimal
 
@@ -28,36 +32,65 @@ from .utils import validate_init_data
 
 logger = logging.getLogger('shop')
 
-# --- ИЗМЕНЕНИЕ: Определение миксина ПЕРЕНЕСЕНО В НАЧАЛО ФАЙЛА ---
-class TelegramAuthMixin(APIView):
+# --- ИЗМЕНЕНИЕ: Новый универсальный миксин авторизации ---
+class SessionAuthMixin(APIView):
     """
-    Миксин для проверки аутентификации Telegram Web App.
-    Извлекает данные пользователя из initData и делает их доступными в request.telegram_user.
+    Универсальный миксин для идентификации пользователя.
+    1. Проверяет Telegram InitData (заголовок Authorization).
+    2. Если нет -> проверяет заголовок X-Session-ID.
     """
     def dispatch(self, request, *args, **kwargs):
+        # 0. DEBUG режим (для тестов без токенов)
         auth_header = request.headers.get('Authorization')
-
-        # Для локальной разработки без Telegram, разрешаем доступ в режиме DEBUG
         if not auth_header and settings.DEBUG:
-            print("WARNING: Bypassing Telegram auth in DEBUG mode.")
-            # Подставляем фейковые данные для тестов
+            # Пытаемся найти сессию даже в дебаге
+            session_key = request.headers.get('X-Session-ID')
+            if session_key:
+                request.telegram_user = None
+                request.session_key = session_key
+                return super().dispatch(request, *args, **kwargs)
+
+            # Фолбэк на фейкового юзера, если совсем ничего нет (старое поведение)
+            print("WARNING: Bypassing auth in DEBUG mode with fake user.")
             request.telegram_user = {'id': 123456789, 'first_name': 'Test', 'last_name': 'User', 'username': 'testuser'}
+            request.session_key = None
             return super().dispatch(request, *args, **kwargs)
 
-        if not auth_header or not auth_header.startswith('tma '):
-            return Response({"error": "Authorization header is missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+        # 1. Попытка авторизации через Telegram
+        if auth_header and auth_header.startswith('tma '):
+            init_data_str = auth_header.split(' ')[1]
+            user_data = validate_init_data(init_data_str, settings.TELEGRAM_BOT_TOKEN)
 
-        init_data_str = auth_header.split(' ')[1]
+            if user_data:
+                request.telegram_user = user_data
+                request.session_key = None # Приоритет у Telegram
+                return super().dispatch(request, *args, **kwargs)
+            else:
+                return Response({"error": "Invalid Telegram data"}, status=status.HTTP_403_FORBIDDEN)
 
-        # Валидируем initData с помощью нашего токена
-        user_data = validate_init_data(init_data_str, settings.TELEGRAM_BOT_TOKEN)
+        # 2. Если Telegram нет -> ищем X-Session-ID
+        session_key = request.headers.get('X-Session-ID')
+        if session_key:
+            request.telegram_user = None
+            request.session_key = session_key
+            return super().dispatch(request, *args, **kwargs)
 
-        if user_data is None:
-            return Response({"error": "Invalid Telegram data"}, status=status.HTTP_403_FORBIDDEN)
+        # 3. Если ничего нет -> Ошибка (фронтенд обязан прислать хоть что-то)
+        return Response({"error": "No authentication provided (Telegram or Session ID)"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Сохраняем проверенные данные пользователя в объект запроса для дальнейшего использования
-        request.telegram_user = user_data
-        return super().dispatch(request, *args, **kwargs)
+    def get_cart(self):
+        """Вспомогательный метод для получения (или создания) корзины текущего пользователя."""
+        if hasattr(self.request, 'telegram_user') and self.request.telegram_user:
+            cart, _ = Cart.objects.prefetch_related('items__product__category', 'items__product__info_panels').get_or_create(
+                telegram_id=self.request.telegram_user['id']
+            )
+        elif hasattr(self.request, 'session_key') and self.request.session_key:
+            cart, _ = Cart.objects.prefetch_related('items__product__category', 'items__product__info_panels').get_or_create(
+                session_key=self.request.session_key
+            )
+        else:
+            return None
+        return cart
 
 
 def parse_init_data(init_data: str, bot_token: str):
@@ -380,8 +413,8 @@ def calculate_detailed_discounts(items):
     }
 
 
-# --- 2. НОВЫЙ VIEW ДЛЯ ДИНАМИЧЕСКОГО РАСЧЕТА ---
-class CalculateSelectionView(TelegramAuthMixin):
+# --- 2. ОБНОВЛЕННЫЙ VIEW ДЛЯ ДИНАМИЧЕСКОГО РАСЧЕТА ---
+class CalculateSelectionView(SessionAuthMixin):
     """
     Рассчитывает итоги и скидки для произвольного набора товаров (выбранных).
     """
@@ -389,7 +422,6 @@ class CalculateSelectionView(TelegramAuthMixin):
         selection = request.data.get('selection', [])
 
         # Конвертируем selection в queryset CartItem-ов "на лету"
-        # Это хак, но он позволяет переиспользовать код
         cart_items_mock = []
         for item_data in selection:
             try:
@@ -404,14 +436,13 @@ class CalculateSelectionView(TelegramAuthMixin):
         detailed_data['items'] = DetailedCartItemSerializer(detailed_data['items'], many=True, context={'request': request}).data
         return Response(detailed_data)
 
-# --- 3. ОБНОВЛЯЕМ CartView, ЧТОБЫ ОН ИСПОЛЬЗОВАЛ НОВУЮ ФУНКЦИЮ ---
-class CartView(TelegramAuthMixin):
+# --- 3. ОБНОВЛЕННЫЙ CartView ---
+class CartView(SessionAuthMixin):
     def get(self, request, *args, **kwargs):
-        telegram_id = request.telegram_user.get('id')
-        if not telegram_id:
-            return Response({"error": "Telegram ID не предоставлен"}, status=status.HTTP_400_BAD_REQUEST)
-
-        cart, _ = Cart.objects.prefetch_related('items__product__category', 'items__product__info_panels').get_or_create(telegram_id=telegram_id)
+        # Используем универсальный метод получения корзины
+        cart = self.get_cart()
+        if not cart:
+            return Response({"error": "Cart not found or session invalid"}, status=status.HTTP_404_NOT_FOUND)
 
         detailed_data = calculate_detailed_discounts(cart.items.all())
         # Сериализуем "раскрашенные" товары
@@ -421,22 +452,21 @@ class CartView(TelegramAuthMixin):
 
     def post(self, request, *args, **kwargs):
         """Добавить/обновить/удалить товар и вернуть обновленную корзину с расчетами."""
-        telegram_id = request.telegram_user.get('id')
-        if not telegram_id:
-            return Response({"error": "Telegram ID не предоставлен"}, status=status.HTTP_400_BAD_REQUEST)
-
         product_id = request.data.get('product_id')
         quantity = int(request.data.get('quantity', 1))
 
         if not product_id:
-            return Response({"error": "Product ID не предоставлен"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Product ID required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        cart, created = Cart.objects.get_or_create(telegram_id=telegram_id)
+        # Получаем/создаем корзину
+        cart = self.get_cart()
+        if not cart:
+             return Response({"error": "Unable to create cart"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
-            return Response({"error": "Товар не найден"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
         if quantity > 0:
             # Используем update_or_create для более чистого кода
@@ -457,57 +487,57 @@ class CartView(TelegramAuthMixin):
 
     def delete(self, request, *args, **kwargs):
         """Удалить несколько товаров из корзины по их ID."""
-        telegram_id = request.telegram_user.get('id')
-        if not telegram_id:
-            return Response({"error": "Telegram ID не предоставлен"}, status=status.HTTP_400_BAD_REQUEST)
-
         # Ожидаем список ID товаров для удаления
         product_ids = request.data.get('product_ids', [])
         if not isinstance(product_ids, list):
-            return Response({"error": "Ожидается список product_ids"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Expected list of product_ids"}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            cart = Cart.objects.get(telegram_id=telegram_id)
+        cart = self.get_cart()
+        if cart:
             # Удаляем все CartItem, связанные с этой корзиной и переданными ID товаров
             CartItem.objects.filter(cart=cart, product_id__in=product_ids).delete()
-        except Cart.DoesNotExist:
-            # Если корзины нет, значит, и удалять нечего. Просто возвращаем успех.
-            pass
 
-        # Возвращаем обновленное состояние всей корзины с расчетами
-        cart, _ = Cart.objects.get_or_create(telegram_id=telegram_id)
-        detailed_data = calculate_detailed_discounts(cart.items.all())
-        detailed_data['items'] = DetailedCartItemSerializer(detailed_data['items'], many=True, context={'request': request}).data
-        return Response(detailed_data, status=status.HTTP_200_OK)
+            # Возвращаем обновленное состояние
+            cart.refresh_from_db()
+            detailed_data = calculate_detailed_discounts(cart.items.all())
+            detailed_data['items'] = DetailedCartItemSerializer(detailed_data['items'], many=True, context={'request': request}).data
+            return Response(detailed_data, status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class OrderCreateView(TelegramAuthMixin):
+# --- 4. ОБНОВЛЕННЫЙ OrderCreateView ---
+class OrderCreateView(SessionAuthMixin):
     def post(self, request, *args, **kwargs):
-        telegram_id = request.telegram_user.get('id')
-        if not telegram_id:
-            return Response({"error": "Telegram ID не предоставлен"}, status=status.HTTP_400_BAD_REQUEST)
+        cart = self.get_cart()
+        if not cart:
+            return Response({"error": "Cart not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            cart = Cart.objects.get(telegram_id=telegram_id)
-            selected_product_ids = {item['product_id'] for item in request.data.get('items', [])}
-            if not selected_product_ids:
-                 return Response({"error": "В заказе нет товаров"}, status=status.HTTP_400_BAD_REQUEST)
+        selected_product_ids = {item['product_id'] for item in request.data.get('items', [])}
+        if not selected_product_ids:
+             return Response({"error": "No items in order"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Фильтруем товары, которые реально есть в корзине
-            items_to_order = cart.items.filter(product_id__in=selected_product_ids)
+        # Фильтруем товары, которые реально есть в корзине
+        items_to_order = cart.items.filter(product_id__in=selected_product_ids)
 
-            if not items_to_order.exists():
-                logger.warning(f"Пользователь {telegram_id} попытался заказать товары, которых нет в корзине.")
-                return Response({"error": "Выбранные товары не найдены в корзине"}, status=status.HTTP_400_BAD_REQUEST)
-        except Cart.DoesNotExist:
-            return Response({"error": "Корзина не найдена"}, status=status.HTTP_404_NOT_FOUND)
+        if not items_to_order.exists():
+            return Response({"error": "Selected items not found in cart"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Рассчитываем итоговые суммы
         calculation_results = calculate_detailed_discounts(list(items_to_order))
 
+        # Формируем контекст для сериализатора
+        context = {
+            'calculation_results': calculation_results,
+            # Если есть telegram_user, берем ID, иначе None
+            'telegram_id': request.telegram_user['id'] if request.telegram_user else None,
+            # Если telegram_user НЕТ, берем session_key, иначе None
+            'session_key': request.session_key if not request.telegram_user else None
+        }
+
         serializer = OrderCreateSerializer(
             data=request.data,
-            context={'telegram_id': telegram_id, 'calculation_results': calculation_results}
+            context=context
         )
 
         if serializer.is_valid():
@@ -521,25 +551,19 @@ class OrderCreateView(TelegramAuthMixin):
                     items_to_order.delete()
                 # --- КОНЕЦ БЛОКА ТРАНЗАКЦИИ ---
 
-                # ПРОФЕССИОНАЛЬНОЕ ЛОГИРОВАНИЕ
-                # info - для успешных операций
-                logger.info(f"Новый заказ #{order.id} успешно создан пользователем {telegram_id}.")
+                user_type = "Telegram User" if context['telegram_id'] else "Web Guest"
+                logger.info(f"New order #{order.id} created by {user_type}.")
 
                 return Response({'success': True, 'order_id': order.id}, status=status.HTTP_201_CREATED)
 
             except Exception as e:
-                # ПРОФЕССИОНАЛЬНОЕ ЛОГИРОВАНИЕ ОШИБОК
-                # error - для критических ошибок
-                # exc_info=True запишет полный "след" ошибки (traceback) в файл, чтобы вы поняли причину
-                logger.error(f"Критическая ошибка при создании заказа для {telegram_id}: {e}", exc_info=True)
-
+                logger.error(f"Order creation failed: {e}", exc_info=True)
                 return Response(
-                    {"error": "Произошла ошибка при обработке заказа. Попробуйте еще раз."},
+                    {"error": "Order processing failed. Please try again."},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         else:
-            # Логируем ошибки валидации (полезно знать, если клиенты часто ошибаются при вводе)
-            logger.warning(f"Ошибка валидации заказа для {telegram_id}: {serializer.errors}")
+            logger.warning(f"Order validation error: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
