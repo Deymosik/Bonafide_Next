@@ -142,7 +142,6 @@ export default function ProductPageClient({ product }) {
 
                     {allColorVariations.length > 1 && (
                         <div className={styles['color-swatches-section']}>
-                            <span className={styles['color-swatches-label']}>Цвет:</span>
                             <div className={styles['color-swatches-container']}>
                                 {allColorVariations.map(variation => (
                                     <Link
@@ -180,7 +179,7 @@ export default function ProductPageClient({ product }) {
 
                 {product.audio_sample && (
                     <div className={`${styles['product-section']} ${styles['audio-section']}`}>
-                        <h2>Пример звучания</h2>
+                        <h2>Запись микрофонов:</h2>
                         <audio controls className={styles['audio-player']} src={product.audio_sample} />
                     </div>
                 )}
