@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import AccordionItem from './AccordionItem';
 import InfoCarousel from './InfoCarousel';
 import { useSettings } from '@/context/SettingsContext';
-import styles from '../app/faq/FaqPage.module.css'; // Путь к стилям
+import styles from '../app/faq/FaqPage.module.css';
 
 const FaqPageClient = ({ faqItems }) => {
     const settings = useSettings();
@@ -18,15 +18,18 @@ const FaqPageClient = ({ faqItems }) => {
 
     const SectionContent = ({ content }) => {
         if (!content) return <p className={styles['info-section-placeholder']}>Информация скоро появится.</p>;
-        // Применяем класс для стилизации HTML контента
         return <div className={styles['info-section-content']} dangerouslySetInnerHTML={{ __html: content }} />;
     };
 
     return (
         <div className={styles['faq-page']}>
-            {/* Блок с переключателем и контентом вкладок */}
+            {/*
+               ИСПРАВЛЕНИЕ:
+               Выносим контент из sticky-блока.
+               Липким остается только блок с кнопками (навигация).
+            */}
             <div
-                className={`${styles['info-tabs-section']} sticky-top-safe`}
+                className={`${styles['info-tabs-nav']} sticky-top-safe`}
                 style={{backgroundColor: 'var(--app-bg-color)', zIndex: 10}}
             >
                 <div className={styles['segmented-control']}>
@@ -40,26 +43,26 @@ const FaqPageClient = ({ faqItems }) => {
                         </button>
                     ))}
                 </div>
+            </div>
 
-                <div className={styles['content-container']}>
-                    {activeTab === 'about' && (
-                        <div className={`${styles['content-tab']} ${styles['active']}`} key="about">
-                            {/* Передаем изображения из настроек в карусель */}
-                            {settings.images && <InfoCarousel images={settings.images}/>}
-                            <SectionContent content={settings.about_us_section}/>
-                        </div>
-                    )}
-                    {activeTab === 'delivery' && (
-                        <div className={`${styles['content-tab']} ${styles['active']}`} key="delivery">
-                            <SectionContent content={settings.delivery_section}/>
-                        </div>
-                    )}
-                    {activeTab === 'warranty' && (
-                        <div className={`${styles['content-tab']} ${styles['active']}`} key="warranty">
-                            <SectionContent content={settings.warranty_section}/>
-                        </div>
-                    )}
-                </div>
+            {/* Контент теперь идет отдельно и может растягиваться бесконечно вниз */}
+            <div className={styles['content-container']}>
+                {activeTab === 'about' && (
+                    <div className={`${styles['content-tab']} ${styles['active']}`} key="about">
+                        {settings.images && <InfoCarousel images={settings.images}/>}
+                        <SectionContent content={settings.about_us_section}/>
+                    </div>
+                )}
+                {activeTab === 'delivery' && (
+                    <div className={`${styles['content-tab']} ${styles['active']}`} key="delivery">
+                        <SectionContent content={settings.delivery_section}/>
+                    </div>
+                )}
+                {activeTab === 'warranty' && (
+                    <div className={`${styles['content-tab']} ${styles['active']}`} key="warranty">
+                        <SectionContent content={settings.warranty_section}/>
+                    </div>
+                )}
             </div>
 
             {/* БЛОК С FAQ */}

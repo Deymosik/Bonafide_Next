@@ -1,9 +1,8 @@
 /* frontend/src/pages/FaqPage.css */
-/* Переменные (--app-bg-color, --app-text-color и др.)
-   импортируются из глобального файла /src/styles/theme.css */
+/* Переменные импортируются из глобального файла /src/styles/theme.css */
 
 .faq-page {
-    padding:16px 16px 32px;
+    padding: 16px 16px 32px;
 }
 
 .faq-title {
@@ -13,20 +12,24 @@
     color: var(--app-text-color);
 }
 
-/* --- КОНТЕЙНЕР ДЛЯ БЛОКА С ВКЛАДКАМИ --- */
-.info-tabs-section {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--app-secondary-bg-color); /* Использовали secondary-bg как разделитель */
+/* --- КОНТЕЙНЕР ДЛЯ КНОПОК НАВИГАЦИИ (ЛИПКИЙ) --- */
+/* Был .info-tabs-section, стал .info-tabs-nav */
+.info-tabs-nav {
+    padding-top: 8px; /* Небольшой отступ сверху, чтобы не прилипало к краю экрана */
+    padding-bottom: 12px;
+    background-color: var(--app-bg-color);
+    /* Граница теперь отделяет кнопки от контента */
+    border-bottom: 1px solid var(--app-secondary-bg-color);
+    margin-bottom: 24px;
 }
 
-/* --- СЕГМЕНТИРОВАННЫЙ КОНТРОЛ (ПЕРЕКЛЮЧАТЕЛЬ) --- */
+/* --- СЕГМЕНТИРОВАННЫЙ КОНТРОЛ --- */
 .segmented-control {
     display: flex;
-    background-color: var(--app-secondary-bg-color); /* Можно использовать secondary-bg для фона контрола */
+    background-color: var(--app-secondary-bg-color);
     border-radius: 10px;
     padding: 4px;
-    margin-bottom: 24px;
+    /* margin-bottom убрали, так как отступ теперь дает родительский .info-tabs-nav */
 }
 
 .segment-button {
@@ -45,17 +48,22 @@
 .segment-button.active {
     background-color: var(--app-bg-color);
     color: var(--app-text-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Тень пока оставим, она не связана с переменными напрямую */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* --- КОНТЕЙНЕР ДЛЯ КОНТЕНТА ВКЛАДОК --- */
 .content-container {
     position: relative;
-    min-height: 150px; /* Минимальная высота, чтобы не было "прыжков" */
+    min-height: 150px;
+    /* Важно: добавляем отступ снизу перед следующим блоком */
+    margin-bottom: 40px;
 }
 
 .content-tab {
     animation: fadeIn 0.4s ease-out;
+    /* Гарантируем, что блок растягивается по контенту */
+    height: auto;
+    overflow: visible;
 }
 
 @keyframes fadeIn {
@@ -67,13 +75,22 @@
 .info-section-content {
     font-size: 16px;
     line-height: 1.6;
-    color: var(--text-color-secondary); /* Используем локальную secondary, если не хотим, чтобы зависело от темы TG */
+    color: var(--text-color-secondary);
+
+    /* ИСПРАВЛЕНИЕ ВЕРСТКИ ДЛЯ БОЛЬШОГО ТЕКСТА */
+    /* Заставляет длинные слова переноситься, чтобы не растягивать экран вширь */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
 }
+
 .info-section-placeholder {
     color: var(--app-hint-color);
     padding: 20px 0;
     text-align: center;
 }
+
 .info-section-content :global(p) { margin: 0 0 1.2em 0; }
 .info-section-content :global(p:last-child) { margin-bottom: 0; }
 .info-section-content :global(ul), .info-section-content :global(ol) { padding-left: 20px; margin: 0 0 1.2em 0; }
@@ -84,12 +101,12 @@
 }
 .info-section-content :global(a:hover) { text-decoration: underline; }
 
-/* --- ОБЩИЙ ЗАГОЛОВОК ДЛЯ СЕКЦИЙ FAQ И КОНТАКТОВ --- */
+/* --- ОБЩИЙ ЗАГОЛОВОК ДЛЯ СЕКЦИЙ --- */
 .info-section-title {
     font-size: 20px;
     text-align: center;
     font-weight: 600;
-    margin: 0 0 16px 0; /* Увеличили нижний отступ */
+    margin: 0 0 16px 0;
     color: var(--app-text-color);
 }
 
@@ -97,7 +114,7 @@
 .faq-accordion-section {
     margin-bottom: 32px;
     padding-bottom: 24px;
-    border-bottom: 1px solid var(--app-secondary-bg-color); /* Использовали secondary-bg как разделитель */
+    border-bottom: 1px solid var(--app-secondary-bg-color);
 }
 
 .faq-list {
@@ -105,17 +122,9 @@
     flex-direction: column;
 }
 
-.faq-skeleton {
-    width: 100%;
-    height: 57px;
-    background-color: var(--app-secondary-bg-color); /* Скелетон также использует secondary-bg */
-    border-radius: 12px;
-    margin-bottom: 8px;
-}
-
 /* --- БЛОК С КОНТАКТАМИ --- */
 .contacts-section {
-    /* Убрали отступы, так как они теперь у родительских блоков */
+    /* Стили остаются прежними */
 }
 
 .contacts-content p {
