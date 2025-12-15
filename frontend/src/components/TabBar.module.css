@@ -1,20 +1,41 @@
 /* frontend/src/components/TabBar.css */
-/* Переменные импортируются из глобального файла /src/styles/theme.css */
+
 .tab-bar {
     position: fixed;
     bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50px; /* Стандартная высота для Tab Bar */
+    /* Центрируем блок */
+    left: 50%;
+    transform: translateX(-50%);
 
-    /* Используем вторичный цвет фона темы. Для "стеклянного" эффекта может потребоваться RGBA с прозрачностью. */
+    width: 100%;
+    /* Ограничиваем ширину */
+    max-width: var(--desktop-max-width);
+
+    height: 60px; /* Чуть выше стандартного */
     background-color: var(--app-secondary-bg-color);
+
+    /* Добавляем границу сверху, чтобы отделить от контента */
+    border-top: 1px solid var(--app-separator-color);
 
     display: flex;
     justify-content: space-around;
     align-items: center;
     z-index: 1000;
-    padding-bottom: env(safe-area-inset-bottom); /* Отступ для "челки" на iPhone */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Desktop Tweak (Опционально: "Плавающий док") */
+@media (min-width: 1024px) {
+    .tab-bar {
+        /* Если хочется стиль macOS dock */
+        /* bottom: 20px; */
+        /* border-radius: 20px; */
+        /* width: auto; */
+        /* min-width: 400px; */
+        /* padding: 0 20px; */
+        /* border: none; */
+        /* box-shadow: 0 4px 20px rgba(0,0,0,0.1); */
+    }
 }
 
 .tab-bar-item {
@@ -25,37 +46,45 @@
     text-decoration: none;
     flex-grow: 1;
     height: 100%;
-
-    /* Цвет неактивной иконки и текста */
     color: var(--app-hint-color);
-    transition: color 0.2s ease; /* Добавляем плавный переход цвета */
+    transition: color 0.2s ease;
+    cursor: pointer; /* Курсор для мыши */
+}
+
+.tab-bar-item:hover {
+    color: var(--app-text-color); /* Ховер эффект */
+}
+.tab-bar-item:hover svg {
+    fill: var(--app-text-color);
 }
 
 .tab-bar-item svg {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     fill: var(--app-hint-color);
-    margin-bottom: 2px;
-    transition: transform 0.2s ease;
+    margin-bottom: 4px;
+    transition: transform 0.2s ease, fill 0.2s ease;
 }
 
 .tab-bar-item span {
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 500;
 }
 
-/* Стили для АКТИВНОЙ кнопки */
+/* ACTIVE STATE */
 .tab-bar-item.active {
-    /* Цвет активной иконки и текста */
     color: var(--app-button-color);
 }
 
 .tab-bar-item.active svg {
-    transform: scale(1.1); /* Слегка увеличиваем активную иконку */
+    transform: scale(1.1);
     fill: var(--app-button-color);
 }
+.tab-bar-item.active:hover {
+    color: var(--app-button-color); /* Убираем ховер для активного */
+}
 
-/* Стили для значка на корзине */
+/* Badge */
 .cart-icon-wrapper {
     position: relative;
 }
@@ -68,11 +97,11 @@
     color: var(--primary-accent-contrast);
     font-size: 10px;
     font-weight: bold;
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--app-secondary-bg-color); /* Рамка в цвет фона панели */
+    border: 2px solid var(--app-secondary-bg-color);
 }

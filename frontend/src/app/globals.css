@@ -1,4 +1,4 @@
-/* /src/app/globals.css - ФИНАЛЬНАЯ ВЕРСИЯ */
+/* /src/app/globals.css */
 
 /* ========================================= */
 /*      1. ПЕРЕМЕННЫЕ И ТЕМА                 */
@@ -14,11 +14,13 @@
   /* --- Безопасные зоны --- */
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* --- Desktop Config --- */
+  --desktop-max-width: 900px; /* Ограничиваем ширину контента */
 }
 
 /*
    СВЕТЛАЯ ТЕМА
-   Использует переменные Telegram, если они есть, или фолбэки
 */
 [data-theme='light'] {
   --app-bg-color: var(--tg-theme-bg-color, #ffffff);
@@ -37,23 +39,21 @@
 
 /*
    ТЕМНАЯ ТЕМА
-   Жесткая палитра для браузеров. Выглядит дорого и профессионально.
 */
 [data-theme='dark'] {
-  --app-bg-color: #121212;         /* Глубокий черный фон */
-  --app-secondary-bg-color: #1c1c1e; /* Темно-серый для карточек (Apple style) */
-  --app-text-color: #e0e0e0;       /* Мягкий белый текст */
-  --app-hint-color: #98989e;       /* Серый текст подсказок */
-  --app-separator-color: #38383a;  /* Разделители */
+  --app-bg-color: #121212;
+  --app-secondary-bg-color: #1c1c1e;
+  --app-text-color: #e0e0e0;
+  --app-hint-color: #98989e;
+  --app-separator-color: #38383a;
 
-  --app-link-color: #0a84ff;       /* Голубой для ссылок в темной теме */
-  --app-button-color: #c99e10;     /* Белые кнопки */
-  --app-button-text-color: #000000;/* Черный текст на кнопках */
+  --app-link-color: #0a84ff;
+  --app-button-color: #c99e10;
+  --app-button-text-color: #000000;
   --app-destructive-text-color: #ff453a;
 
   --checkbox-border-color: #636366;
 
-  /* Переопределение переменных Telegram для темной темы браузера */
   --tg-theme-bg-color: #121212;
   --tg-theme-secondary-bg-color: #1c1c1e;
   --tg-theme-text-color: #e0e0e0;
@@ -76,7 +76,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Применяем переменные (они теперь зависят от data-theme) */
   background-color: var(--app-bg-color);
   color: var(--app-text-color);
 
@@ -86,8 +85,15 @@ body {
   touch-action: manipulation;
   padding-top: 0;
 
-  /* Плавный переход при смене темы */
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- DESKTOP TWEAKS --- */
+/* На больших экранах делаем фон body отличным от фона контента, чтобы выделить "приложение" */
+@media (min-width: 1024px) {
+  body {
+    background-color: var(--app-secondary-bg-color); /* Серый фон вокруг */
+  }
 }
 
 a {
@@ -102,7 +108,11 @@ a {
   top: var(--safe-area-inset-top);
   z-index: 100;
   background-color: var(--app-bg-color);
-  transition: background-color 0.3s ease; /* Добавили анимацию и сюда */
+  transition: background-color 0.3s ease;
+
+  /* Фикс для десктопа: чтобы sticky элементы не вылезали за ширину контейнера */
+  max-width: var(--desktop-max-width);
+  margin: 0 auto; /* Если родитель position:static, это поможет */
 }
 
 /* ========================================= */
@@ -114,6 +124,13 @@ a {
   flex-direction: column;
   min-height: 100vh;
   position: relative;
+
+  /* --- DESKTOP LAYOUT --- */
+  width: 100%;
+  max-width: var(--desktop-max-width);
+  margin: 0 auto; /* Центрируем приложение */
+  background-color: var(--app-bg-color); /* Возвращаем белый/черный фон контенту */
+  box-shadow: 0 0 50px rgba(0,0,0,0.05); /* Легкая тень по краям */
 }
 
 .layout-content {

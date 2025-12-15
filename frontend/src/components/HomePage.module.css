@@ -5,12 +5,32 @@
     padding: 0;
 }
 
+/* --- GRID ТОВАРОВ (АДАПТИВНАЯ СЕТКА) --- */
 .products-grid {
     display: grid;
+    /* Mobile First: 2 колонки */
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     /* Добавляем отступы здесь, чтобы они не влияли на панель категорий */
     padding: 0 12px 12px 12px;
+}
+
+/* Tablet: 3 колонки (от 600px) */
+@media (min-width: 600px) {
+    .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        padding: 0 16px 16px 16px;
+    }
+}
+
+/* Desktop: 4 колонки (от 900px) */
+@media (min-width: 900px) {
+    .products-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        padding: 0 20px 20px 20px;
+    }
 }
 
 .no-products-message {
@@ -25,10 +45,13 @@
     padding: 20px;
     color: var(--app-hint-color);
 }
+
 .product-link {
     text-decoration: none; /* Убираем подчеркивание */
     color: inherit; /* Наследуем цвет текста */
 }
+
+/* --- ПЛАВАЮЩАЯ КНОПКА КОРЗИНЫ --- */
 .cart-fab {
     position: fixed;
     bottom: 20px;
@@ -45,6 +68,20 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     text-decoration: none;
     z-index: 1000;
+}
+
+/* Desktop Fix: Привязываем кнопку к контенту, чтобы не улетала в угол широкого экрана */
+@media (min-width: 1024px) {
+    .cart-fab {
+        right: 50%;
+        /* Сдвигаем вправо от центра на половину ширины контейнера (450px) минус отступ */
+        /* Используем переменную из globals.css или фолбэк 900px */
+        margin-right: calc(var(--desktop-max-width, 900px) / -2 + 20px);
+        /* Альтернатива через transform для точного позиционирования */
+        transform: translateX(calc(var(--desktop-max-width, 900px) / 2 - 20px));
+        right: auto;
+        left: 50%;
+    }
 }
 
 .cart-fab-badge {
@@ -73,6 +110,10 @@
     top: 0;
     background-color: var(--app-bg-color);
     z-index: 100;
+
+    /* Fix для Desktop: ограничиваем ширину, чтобы не вылезал за контейнер */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .sort-button {
@@ -151,6 +192,7 @@
     font-weight: 600;
 }
 
+/* --- TOP BAR (ПОИСК) --- */
 .top-bar {
     display: flex;
     align-items: center;
@@ -160,6 +202,10 @@
     top: var(--safe-area-inset-top); /* Учитываем "челку" */
     background-color: var(--app-bg-color);
     z-index: 100;
+
+    /* Fix для Desktop: ограничиваем ширину, чтобы не вылезал за контейнер */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .filter-button {
@@ -173,6 +219,11 @@
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+
+.filter-button:hover {
+    background-color: var(--app-separator-color);
 }
 
 .filter-button svg {
