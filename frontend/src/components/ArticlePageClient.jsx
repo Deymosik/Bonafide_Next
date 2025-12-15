@@ -4,14 +4,17 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+// 1. Импортируем useRouter
+import { useRouter } from 'next/navigation';
 import DOMPurify from 'isomorphic-dompurify';
 import { useTheme } from 'next-themes';
 
 import apiClient from '@/lib/api';
 import { useSettings } from '@/context/SettingsContext';
+// 2. Импортируем хук Telegram
+import { useTelegram } from '@/utils/telegram';
 import RelatedProductCard from './RelatedProductCard';
 
-// ИЗМЕНЕНИЕ 1: Импортируем обе иконки вместо одной старой
 import SunIcon from '../assets/sun-icon.svg';
 import MoonIcon from '../assets/moon-icon.svg';
 import EyeIcon from '../assets/eye-icon.svg';
@@ -21,11 +24,30 @@ import styles from '../app/articles/[slug]/ArticlePage.module.css';
 const ArticlePageClient = ({ article }) => {
     const settings = useSettings();
     const { theme, setTheme, resolvedTheme } = useTheme();
+    // 3. Инициализируем роутер и кнопку
+    const router = useRouter();
+    const { BackButton } = useTelegram();
+
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // 4. ДОБАВЛЕНО: Логика кнопки "Назад" в Telegram
+    useEffect(() => {
+        if (BackButton) {
+            BackButton.show();
+            const handleBack = () => router.back();
+            BackButton.onClick(handleBack);
+
+            // Очистка при размонтировании компонента (уходе со страницы)
+            return () => {
+                BackButton.offClick(handleBack);
+                BackButton.hide();
+            };
+        }
+    }, [BackButton, router]);
 
     // Логика счетчика просмотров
     useEffect(() => {
@@ -102,15 +124,12 @@ const ArticlePageClient = ({ article }) => {
                         </div>
                     </div>
 
-                    {/* ИЗМЕНЕНИЕ 2: Логика выбора иконки */}
                     {mounted && (
                         <button
                             onClick={toggleTheme}
                             className={styles['theme-toggle-btn']}
                             title={resolvedTheme === 'light' ? "Включить темную тему" : "Включить светлую тему"}
                         >
-                            {/* Если тема светлая -> показываем Луну (предлагаем ночь)
-                                Если тема темная -> показываем Солнце (предлагаем день) */}
                             {resolvedTheme === 'light' ? <MoonIcon /> : <SunIcon />}
                         </button>
                     )}
