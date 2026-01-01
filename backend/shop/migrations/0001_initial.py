@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
-import django_ckeditor_5.fields
+import tinymce.models
 
 
 class Migration(migrations.Migration):
@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('question', models.CharField(max_length=255, verbose_name='Вопрос')),
-                ('answer', django_ckeditor_5.fields.CKEditor5Field(verbose_name='Ответ')),
+                ('answer', tinymce.models.HTMLField(verbose_name='Ответ')),
                 ('order', models.PositiveIntegerField(default=0, help_text='Чем меньше число, тем выше будет вопрос', verbose_name='Порядок сортировки')),
                 ('is_active', models.BooleanField(default=True, verbose_name='Активен')),
             ],
@@ -145,7 +145,7 @@ class Migration(migrations.Migration):
                 ('regular_price', models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Обычная цена')),
                 ('deal_price', models.DecimalField(blank=True, decimal_places=2, help_text="Укажите цену, которая будет действовать во время акции 'Товар дня'. Оставьте пустым, если скидки нет.", max_digits=10, null=True, verbose_name="Акционная цена ('Товар дня')")),
                 ('deal_ends_at', models.DateTimeField(blank=True, help_text="Укажите дату и время окончания акции. После этого товар перестанет быть 'Товаром дня'.", null=True, verbose_name="Акция 'Товар дня' действует до")),
-                ('description', django_ckeditor_5.fields.CKEditor5Field(verbose_name='Описание')),
+                ('description', tinymce.models.HTMLField(verbose_name='Описание')),
                 ('is_active', models.BooleanField(default=True, verbose_name='Активен (виден клиенту)')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
                 ('main_image', models.ImageField(upload_to='products/main/original/', verbose_name='Главное фото (оригинал)')),
@@ -185,17 +185,17 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('manager_username', models.CharField(default='username', help_text='Без @', max_length=100, verbose_name='Юзернейм менеджера в Telegram')),
                 ('contact_phone', models.CharField(blank=True, max_length=20, verbose_name='Контактный телефон')),
-                ('about_us_section', django_ckeditor_5.fields.CKEditor5Field(blank=True, help_text='Краткий рассказ о магазине', verbose_name="Блок 'О нас'")),
-                ('delivery_section', django_ckeditor_5.fields.CKEditor5Field(blank=True, verbose_name="Блок 'Условия доставки'")),
-                ('warranty_section', django_ckeditor_5.fields.CKEditor5Field(blank=True, verbose_name="Блок 'Гарантия и возврат'")),
+                ('about_us_section', tinymce.models.HTMLField(blank=True, help_text='Краткий рассказ о магазине', verbose_name="Блок 'О нас'")),
+                ('delivery_section', tinymce.models.HTMLField(blank=True, verbose_name="Блок 'Условия доставки'")),
+                ('warranty_section', tinymce.models.HTMLField(blank=True, verbose_name="Блок 'Гарантия и возврат'")),
                 ('free_shipping_threshold', models.DecimalField(blank=True, decimal_places=2, help_text='Оставьте пустым или 0, чтобы отключить эту функцию', max_digits=10, null=True, verbose_name='Порог бесплатной доставки')),
                 ('search_placeholder', models.CharField(default='Найти чехол или наушники...', max_length=150, verbose_name='Плейсхолдер в строке поиска')),
                 ('search_initial_text', models.CharField(default='Начните вводить, чтобы найти товар', max_length=255, verbose_name='Текст до начала поиска')),
                 ('search_lottie_file', models.FileField(blank=True, help_text='Отображается на пустой странице поиска', null=True, upload_to='lottie/', verbose_name='Файл Lottie-анимации (.json) для Поиска')),
                 ('cart_lottie_file', models.FileField(blank=True, help_text='Отображается в пустой корзине', null=True, upload_to='lottie/', verbose_name='Файл Lottie-анимации (.json) для Корзины')),
                 ('article_font_family', models.CharField(default='Exo 2', help_text="Например: 'Roboto', 'Times New Roman', 'Exo 2'", max_length=100, verbose_name='Название шрифта для статей')),
-                ('privacy_policy', django_ckeditor_5.fields.CKEditor5Field(blank=True, verbose_name='Политика конфиденциальности')),
-                ('public_offer', django_ckeditor_5.fields.CKEditor5Field(blank=True, verbose_name='Публичная оферта')),
+                ('privacy_policy', tinymce.models.HTMLField(blank=True, verbose_name='Политика конфиденциальности')),
+                ('public_offer', tinymce.models.HTMLField(blank=True, verbose_name='Публичная оферта')),
             ],
             options={
                 'verbose_name': 'Настройки магазина',
@@ -311,7 +311,7 @@ class Migration(migrations.Migration):
                 ('published_at', models.DateTimeField(default=django.utils.timezone.now, verbose_name='Дата публикации')),
                 ('cover_image', models.ImageField(help_text='Будет отображаться в списке статей и при репосте в соцсети.', upload_to='articles/covers/', verbose_name='Обложка статьи (оригинал)')),
                 ('content_type', models.CharField(choices=[('INTERNAL', 'Внутренняя статья'), ('EXTERNAL', 'Внешняя ссылка')], default='INTERNAL', max_length=10, verbose_name='Тип контента')),
-                ('content', django_ckeditor_5.fields.CKEditor5Field(blank=True, help_text="Для 'Внутренней статьи'. <b>ВАЖНО:</b> перед загрузкой изображений в редактор, сожмите их с помощью онлайн-сервисов (например, TinyPNG) до размера < 1 МБ.", verbose_name='Содержимое статьи')),
+                ('content', tinymce.models.HTMLField(blank=True, help_text="Для 'Внутренней статьи'. <b>ВАЖНО:</b> перед загрузкой изображений в редактор, сожмите их с помощью онлайн-сервисов (например, TinyPNG) до размера < 1 МБ.", verbose_name='Содержимое статьи')),
                 ('external_url', models.URLField(blank=True, help_text="Для 'Внешней ссылки'. Укажите полный URL, например, https://example.com/article", verbose_name='URL внешней статьи')),
                 ('status', models.CharField(choices=[('DRAFT', 'Черновик'), ('PUBLISHED', 'Опубликовано')], default='DRAFT', help_text="'Черновик' не виден пользователям, 'Опубликовано' - виден всем.", max_length=10, verbose_name='Статус')),
                 ('meta_title', models.CharField(blank=True, help_text='Заголовок для вкладки браузера и поисковиков (до 60 символов). Если пусто, используется основной заголовок.', max_length=60, verbose_name='Meta Title (для SEO)')),
