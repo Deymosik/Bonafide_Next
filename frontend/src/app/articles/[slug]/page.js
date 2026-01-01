@@ -17,9 +17,7 @@ export async function generateMetadata(props) {
 
     const siteName = settings?.site_name || 'BonaFide55';
 
-    const title = article.meta_title
-        ? article.meta_title
-        : `${article.title} | ${siteName}`;
+    const title = `${article.title} | ${siteName}`;
 
     const seoVars = {
         site_name: siteName,
@@ -28,20 +26,23 @@ export async function generateMetadata(props) {
 
     const description = article.meta_description || replaceSeoVariables(settings?.seo_description_blog, seoVars);
 
+    // Prepare SEO variables
+    const ogImage = article.og_image_url || article.cover_image_url || '';
+    const canonicalUrl = article.canonical_url || `/articles/${article.slug}`;
     return {
         title: title,
         description: description,
-        // 1. Каноническая ссылка
+        // Каноническая ссылка
         alternates: {
-            canonical: `/articles/${article.slug}`,
+            canonical: canonicalUrl,
         },
         openGraph: {
             title: title,
             description: description,
-            images: [article.cover_image_url || ''],
+            images: [ogImage],
             type: 'article',
             publishedTime: article.published_at,
-            authors: article.author ? [`${article.author.first_name} ${article.author.last_name}`] : [],
+            authors: article.author?.full_name ? [article.author.full_name] : [],
         }
     };
 }
@@ -58,26 +59,59 @@ export default async function ArticlePage(props) {
         redirect(article.external_url);
     }
 
-    // 2. Формируем Rich Snippet для статьи
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+
+    // Получаем настройки для Schema.org
+    const settings = await getShopSettings();
+    const siteName = settings?.site_name || 'Shop';
+
+    // 2. Формируем Rich Snippet для статьи (с Графом и Хлебными крошками)
     const jsonLd = {
         '@context': 'https://schema.org',
-        '@type': 'BlogPosting',
-        headline: article.meta_title || article.title,
-        image: article.cover_image_url ? [article.cover_image_url] : [],
-        datePublished: article.published_at,
-        dateModified: article.published_at,
-        author: {
-            '@type': 'Person',
-            name: article.author ? `${article.author.first_name} ${article.author.last_name}` : 'BonaFide55',
-        },
-        publisher: {
-            '@type': 'Organization',
-            name: 'BonaFide55',
-            logo: {
-                '@type': 'ImageObject',
-                url: 'https://bf55.ru/icon.png' // Ссылка на логотип
-            }
-        }
+        '@graph': [
+            {
+                '@type': 'BlogPosting',
+                headline: article.title,
+                image: article.cover_image_url ? [article.cover_image_url] : [],
+                datePublished: article.published_at,
+                dateModified: article.published_at,
+                author: {
+                    '@type': 'Person',
+                    name: article.author?.full_name || siteName,
+                },
+                publisher: {
+                    '@type': 'Organization',
+                    name: siteName,
+                    logo: settings?.logo_url ? {
+                        '@type': 'ImageObject',
+                        url: settings.logo_url,
+                    } : undefined,
+                },
+            },
+            {
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    {
+                        '@type': 'ListItem',
+                        position: 1,
+                        name: 'Главная',
+                        item: siteUrl,
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: 'Блог',
+                        item: `${siteUrl}/articles`,
+                    },
+                    {
+                        '@type': 'ListItem',
+                        position: 3,
+                        name: article.title,
+                        item: `${siteUrl}/articles/${article.slug}`,
+                    },
+                ],
+            },
+        ],
     };
 
     return (

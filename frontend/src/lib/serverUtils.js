@@ -19,12 +19,16 @@ const SERVER_API_URL = getServerApiUrl();
 /**
  * Универсальная функция для получения данных с API на сервере
  */
-export async function fetchServerData(endpoint) {
+export async function fetchServerData(endpoint, options = {}) {
+    // Если настройки кеширования не переданы явно, то по умолчанию отключаем кеш (no-store)
+    // Но если передали revalidate (ISR), то 'no-store' ставить нельзя, иначе будет ошибка.
+    const fetchOptions = { ...options };
+    if (!fetchOptions.cache && !fetchOptions.next) {
+        fetchOptions.cache = 'no-store';
+    }
+
     try {
-        const res = await fetch(`${SERVER_API_URL}${endpoint}`, {
-            // В Docker сборке важно не кешировать ошибки, поэтому no-store
-            cache: 'no-store',
-        });
+        const res = await fetch(`${SERVER_API_URL}${endpoint}`, fetchOptions);
 
         if (!res.ok) {
             if (res.status === 404) return null;
@@ -56,7 +60,8 @@ export function replaceSeoVariables(template, variables) {
 
 /**
  * Получение глобальных настроек магазина
+ * По умолчанию кешируем на 1 час (3600 сек), так как настройки меняются редко.
  */
-export async function getShopSettings() {
-    return fetchServerData('/settings/');
+export async function getShopSettings(options = { next: { revalidate: 3600 } }) {
+    return fetchServerData('/settings/', options);
 }

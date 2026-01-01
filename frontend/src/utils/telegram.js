@@ -13,7 +13,7 @@ export const useTelegram = () => {
         if (tg) {
             tg.ready();
             // Пытаемся развернуть, но не блокируем, если не выйдет
-            try { tg.expand(); } catch (e) {}
+            try { tg.expand(); } catch (e) { }
             setIsReady(true);
         }
     }, [tg]);
@@ -34,7 +34,13 @@ export const useTelegram = () => {
 
     const showAlert = (message) => {
         if (tg?.showAlert) {
-            tg.showAlert(message);
+            try {
+                tg.showAlert(message);
+            } catch (e) {
+                // Fallback если метод не поддерживается в данной версии Telegram
+                console.warn('Telegram showAlert not supported, using native alert:', e);
+                alert(message);
+            }
         } else {
             // Фолбэк для браузера
             alert(message);

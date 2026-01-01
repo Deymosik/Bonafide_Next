@@ -5,6 +5,7 @@ from django.urls import path, include
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.conf.urls.static import static
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 # Простая функция-заглушка для главной страницы
 def index_view(request):
@@ -14,7 +15,11 @@ urlpatterns = [
     path('', index_view, name='index'),
     path(settings.ADMIN_URL, admin.site.urls),
     path('api/', include('shop.urls')),
-    path("ckeditor5/", include('django_ckeditor_5.urls'), name="ck_editor_5_upload_file"),
+    path('tinymce/', include('tinymce.urls')),
+    # --- Документация API (Swagger) ---
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
 # 2. УБЕДИТЕСЬ, ЧТО ЭТОТ БЛОК КОДА ДОБАВЛЕН В КОНЕЦ ФАЙЛА

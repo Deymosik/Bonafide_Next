@@ -4,6 +4,10 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 from corsheaders.defaults import default_headers
+from datetime import timedelta
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from django.templatetags.static import static
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -32,10 +36,34 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 allowed_hosts_str = os.environ.get('ALLOWED_HOSTS_STR', '127.0.0.1,localhost')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')]
 
+# --- Настройки безопасности для Production ---
+# Эти настройки включаются только когда DEBUG=False
+if not DEBUG:
+    # HTTPS/SSL
+    SECURE_SSL_REDIRECT = True  # Перенаправлять HTTP → HTTPS
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Для работы за reverse proxy
+    
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 год
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Cookies
+    SESSION_COOKIE_SECURE = True  # Cookies только через HTTPS
+    CSRF_COOKIE_SECURE = True     # CSRF cookie только через HTTPS
+    
+    # Дополнительная защита
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+
 
 # --- Приложения Django ---
 
 INSTALLED_APPS = [
+    # --- ADMIN UI (Standard) ---
+    # "unfold" removed
+    # -------------------------
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,7 +72,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'whitenoise.runserver_nostatic',
     # Сторонние приложения
-    'django_ckeditor_5',
+    'drf_spectacular', # Swagger
+    'tinymce',
     'rest_framework',
     'corsheaders',
     'imagekit',
@@ -109,12 +138,41 @@ DATABASES = {
     'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
 }
 
+# Use SQLite for tests to avoid PostgreSQL permission issues
+import sys
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+
+
+# --- Кеширование (Новое) ---
+# В продакшене лучше использовать Redis, но для старта пойдет LocMemCache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
 
 # --- Настройки для Django REST Framework и CORS ---
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': [],
+    # Swagger Schema
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# Настройки Swagger
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'BonaFide55 API',
+    'DESCRIPTION': 'API для интернет-магазина техники и аксессуаров BonaFide55.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Другие настройки...
 }
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
@@ -189,51 +247,50 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# --- Конфигурация для CKEditor 5 ---
+# --- Конфигурация для TinyMCE ---
 
-CKEDITOR_5_UPLOAD_PATH = "uploads/"
-CKEDITOR_5_CONFIGS = {
-    'default': {
-        'language': 'ru',
-        'toolbar': ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'imageUpload', '|', 'undo', 'redo'],
-    },
-    'extends': {
-        'blockToolbar': [
-            'paragraph', 'heading1', 'heading2', 'heading3', '|',
-            'bulletedList', 'numberedList', '|', 'blockQuote',
-        ],
-        'toolbar': [
-            'heading', '|', 'outdent', 'indent', '|', 'bold', 'italic', 'link', 'underline', 'strikethrough',
-            'code','subscript', 'superscript', 'highlight', '|', 'codeBlock', 'sourceEditing', 'insertImage',
-            'bulletedList', 'numberedList', 'todoList', '|',  'blockQuote', 'imageUpload', '|',
-            'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'mediaEmbed', 'removeFormat',
-            'insertTable',
-        ],
-        'image': {
-            'toolbar': ['imageTextAlternative', '|', 'imageStyle:alignLeft', 'imageStyle:alignRight', 'imageStyle:alignCenter', 'imageStyle:side',  '|'],
-            'styles': ['full', 'side', 'alignLeft', 'alignRight', 'alignCenter']
-        },
-        'table': {
-            'contentToolbar': [ 'tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties' ],
-            'tableProperties': {'borderColors': 'custom', 'backgroundColors': 'custom'},
-            'tableCellProperties': {'borderColors': 'custom', 'backgroundColors': 'custom'}
-        },
-        'heading' : {
-            'options': [
-                { 'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph' },
-                { 'model': 'heading1', 'view': 'h1', 'title': 'Heading 1', 'class': 'ck-heading_heading1' },
-                { 'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2' },
-                { 'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3' }
-            ]
-        }
-    },
-    'list': {
-        'properties': {
-            'styles': 'true',
-            'startIndex': 'true',
-            'reversed': 'true',
-        }
-    }
+TINYMCE_DEFAULT_CONFIG = {
+    "license_key": "gpl",  # Open-source GPL license
+    "theme": "silver",
+    "height": 400,
+    "menubar": True,
+    "language": "ru",
+    "plugins": [
+        "advlist", "autolink", "lists", "link", "image", "charmap", "preview",
+        "anchor", "searchreplace", "visualblocks", "code", "fullscreen",
+        "insertdatetime", "media", "table", "help", "wordcount", "emoticons"
+    ],
+    "toolbar": (
+        "undo redo | blocks | bold italic underline strikethrough | "
+        "forecolor backcolor | alignleft aligncenter alignright alignjustify | "
+        "bullist numlist outdent indent | link image media table emoticons | "
+        "removeformat code fullscreen help"
+    ),
+    "content_css": "default",
+    # Стили для контента редактора — изображения по умолчанию 300px в ширину
+    "content_style": "img { max-width: 300px; height: auto; display: block; margin: 10px 0; }",
+    "branding": False,
+    "promotion": False,
+    # Image upload configuration
+    "images_upload_url": "/api/tinymce/upload-image/",
+    "images_upload_credentials": True,
+    "automatic_uploads": True,
+    "file_picker_types": "image",
+    "image_title": True,
+    "image_caption": True,
+    "image_advtab": True,
+    # Разрешённые типы файлов для загрузки
+    "images_file_types": "jpg,jpeg,png,gif,webp,heic,heif",
+    # Сохранять пропорции изображения при изменении размера
+    "image_dimensions": True,
+    # Классы для изображений (пользователь может выбрать размер)
+    "image_class_list": [
+        {"title": "По умолчанию (50%)", "value": ""},
+        {"title": "Маленькое (25%)", "value": "img-small"},
+        {"title": "Среднее (50%)", "value": "img-medium"},
+        {"title": "Большое (75%)", "value": "img-large"},
+        {"title": "На всю ширину", "value": "img-full"},
+    ],
 }
 
 # --- ПРОФЕССИОНАЛЬНОЕ ЛОГИРОВАНИЕ ---
@@ -267,3 +324,7 @@ LOGGING = {
         },
     },
 }
+
+# --- Настройки django-unfold (Админка) ---
+# --- Настройки django-unfold (Админка) ---
+# UNFOLD settings removed to restore standard admin interface

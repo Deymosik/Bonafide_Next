@@ -15,12 +15,13 @@ const inter = Inter({
     display: 'swap',
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bf55.ru';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'Shop';
 
 export const metadata = {
     metadataBase: new URL(SITE_URL),
-    title: { default: "BonaFide55 Shop" },
-    description: "Магазин аксессуаров в Telegram",
+    title: { default: SITE_NAME },
+    description: "Интернет-магазин",
     manifest: '/manifest.json',
     icons: {
         icon: '/icon.png?v=5',      // Добавили версию для сброса кеша
@@ -30,7 +31,7 @@ export const metadata = {
     openGraph: {
         type: 'website',
         locale: 'ru_RU',
-        siteName: 'BonaFide55',
+        siteName: SITE_NAME,
     }
 };
 
@@ -49,33 +50,33 @@ export default function RootLayout({ children }) {
            меняет атрибуты html на клиенте сразу после загрузки.
         */
         <html lang="ru" suppressHydrationWarning>
-        <head>
-            <Script
-                src="https://telegram.org/js/telegram-web-app.js"
-                strategy="beforeInteractive"
-            />
-        </head>
-        <body className={inter.className}>
-        {/*
+            <head>
+                <Script
+                    src="https://telegram.org/js/telegram-web-app.js"
+                    strategy="beforeInteractive"
+                />
+            </head>
+            <body className={inter.className}>
+                {/*
                     attribute="data-theme": библиотека будет ставить <html data-theme="dark">
                     defaultTheme="system": берет настройку ОС
                     enableSystem: включает авто-определение
                 */}
-        <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
-            <SettingsProvider>
-                <NotificationProvider>
-                    <CartProvider>
-                        <div className="app-layout-container">
-                            <main className="layout-content">
-                                {children}
-                            </main>
-                            <TabBar />
-                        </div>
-                    </CartProvider>
-                </NotificationProvider>
-            </SettingsProvider>
-        </ThemeProvider>
-        </body>
+                <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
+                    <SettingsProvider>
+                        <NotificationProvider>
+                            <CartProvider>
+                                <div className="app-layout-container">
+                                    <main className="layout-content">
+                                        {children}
+                                    </main>
+                                    <TabBar />
+                                </div>
+                            </CartProvider>
+                        </NotificationProvider>
+                    </SettingsProvider>
+                </ThemeProvider>
+            </body>
         </html>
     );
 }

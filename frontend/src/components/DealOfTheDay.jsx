@@ -53,7 +53,7 @@ const DealOfTheDay = ({ product }) => {
     const pad = (n) => n < 10 ? `0${n}` : n;
 
     return (
-        <Link href={`/products/${product.id}`} className={styles['deal-container']}>
+        <Link href={`/products/${product.slug}`} className={styles['deal-container']}>
             <div className={styles['deal-image']}>
                 {product.main_image_thumbnail_url && (
                     <Image

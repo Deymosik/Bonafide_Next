@@ -1,5 +1,4 @@
-// src/app/articles/page.js
-export const dynamic = 'force-dynamic';
+// export const dynamic = 'force-dynamic'; // Убираем, используем кеширование данных
 import React from 'react';
 import ArticleListClient from '@/components/ArticleListClient';
 // Импортируем наши серверные утилиты
@@ -42,11 +41,13 @@ export default async function ArticlesPage(props) {
     if (searchParams.sort === 'popular') {
         apiParams.append('ordering', '-views_count'); // Самые просматриваемые
     } else {
-        apiParams.append('ordering', '-published_at'); // Самые свежие (по умолчанию)
+        // По умолчанию: сначала закрепленные, потом свежие
+        apiParams.append('ordering', '-is_featured,-published_at');
     }
 
-    // Делаем запрос к API
-    const data = await fetchServerData(`/articles/?${apiParams.toString()}`);
+    // Делаем запрос к API с кешированием данных на 1 час
+    // Сама страница может рендериться динамически из-за searchParams, но запрос в базу будет закеширован
+    const data = await fetchServerData(`/articles/?${apiParams.toString()}`, { next: { revalidate: 60 } });
 
     // Безопасное извлечение данных (если API вернет null или ошибку)
     const serverData = data || {};

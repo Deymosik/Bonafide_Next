@@ -152,23 +152,26 @@ ${summary}
                 const managerUsername = settings?.manager_username || 'username';
                 const telegramLink = `https://t.me/${managerUsername}?text=${encodeURIComponent(message)}`;
 
+                // Сначала очищаем корзину
+                deleteSelectedItems();
+
                 openTelegramLink(telegramLink);
                 // Закрываем приложение (только в Telegram)
                 setTimeout(() => {
                     onClose();
                 }, 500);
             } else {
+                // Сначала очищаем корзину (до показа уведомления, чтобы избежать проблем)
+                deleteSelectedItems();
+
                 // Если это веб-пользователь, просто показываем уведомление
-                // В будущем здесь можно сделать редирект на страницу "Спасибо за заказ"
                 showAlert("Заказ успешно оформлен! Наш менеджер свяжется с вами.");
 
-                // Очищаем корзину и перенаправляем на главную через паузу
+                // Перенаправляем на главную через паузу
                 setTimeout(() => {
                     router.push('/');
                 }, 2000);
             }
-
-            deleteSelectedItems();
 
         } catch (error) {
             console.error("Order creation failed:", error);

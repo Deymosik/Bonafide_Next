@@ -10,7 +10,8 @@
     padding-bottom: 60px;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Центрируем контент */
+    align-items: center;
+    /* Центрируем контент */
 }
 
 /* --- Хлебные крошки --- */
@@ -102,6 +103,7 @@
     align-items: center;
     gap: 4px;
 }
+
 .eye-icon {
     width: 14px;
     height: 14px;
@@ -123,9 +125,11 @@
     transition: all 0.2s ease;
     flex-shrink: 0;
 }
+
 .theme-toggle-btn:hover {
     background-color: var(--app-separator-color);
 }
+
 .theme-toggle-btn svg {
     fill: var(--app-text-color);
 }
@@ -197,10 +201,30 @@
 }
 
 .article-content :global(img) {
-    width: 100%;
+    max-width: 100%;
+    width: auto;
     height: auto;
     border-radius: 12px;
-    margin: 32px 0;
+    margin: 32px auto;
+    display: block;
+}
+
+/* Классы размеров изображений из TinyMCE */
+.article-content :global(img.img-small) {
+    max-width: 25%;
+}
+
+.article-content :global(img.img-medium) {
+    max-width: 50%;
+}
+
+.article-content :global(img.img-large) {
+    max-width: 75%;
+}
+
+.article-content :global(img.img-full) {
+    width: 100%;
+    max-width: 100%;
 }
 
 .article-content :global(a) {
@@ -210,6 +234,7 @@
     text-underline-offset: 3px;
     transition: opacity 0.2s;
 }
+
 .article-content :global(a:hover) {
     opacity: 0.8;
 }
@@ -222,6 +247,7 @@
     border-radius: 6px;
     font-size: 0.9em;
 }
+
 .article-content :global(code) {
     font-family: 'Menlo', 'Monaco', monospace;
     background-color: var(--app-secondary-bg-color);
@@ -295,7 +321,7 @@
         width: auto;
     }
 
-    .product-card-wrapper > a {
+    .product-card-wrapper>a {
         width: 100% !important;
     }
 }

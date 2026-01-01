@@ -16,7 +16,7 @@ const RelatedProductCard = ({ product }) => {
     }).format(price);
 
     return (
-        <Link href={`/products/${product.id}`} className={styles['related-card']}>
+        <Link href={`/products/${product.slug}`} className={styles['related-card']}>
             <div className={styles['related-card-image-wrapper']}>
                 {imageUrl ? (
                     <Image

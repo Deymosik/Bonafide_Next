@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.db.models import Prefetch
 from django.db.models import F
 from django.db import transaction
+from django.utils.decorators import method_decorator # Добавлено
+from django.views.decorators.cache import cache_page # Добавлено
 from urllib.parse import parse_qsl  # Добавлено, так как используется в parse_init_data
 import hmac # Добавлено
 import hashlib # Добавлено
@@ -214,6 +216,7 @@ class ProductListView(generics.ListAPIView):
 class ProductDetailView(generics.RetrieveAPIView):
     # 3. ОПТИМИЗАЦИЯ: Заменяем атрибут queryset на метод get_queryset для сложного запроса.
     serializer_class = ProductDetailSerializer
+    lookup_field = 'slug'
 
     def get_queryset(self):
         """
@@ -554,6 +557,13 @@ class OrderCreateView(SessionAuthMixin):
                 user_type = "Telegram User" if context['telegram_id'] else "Web Guest"
                 logger.info(f"New order #{order.id} created by {user_type}.")
 
+                # Шаг 3: Отправляем уведомление менеджеру в Telegram (асинхронно, не блокирует)
+                try:
+                    from .telegram_notifications import send_order_notification
+                    send_order_notification(order)
+                except Exception as tg_error:
+                    logger.error(f"Failed to send Telegram notification for order #{order.id}: {tg_error}")
+
                 return Response({'success': True, 'order_id': order.id}, status=status.HTTP_201_CREATED)
 
             except Exception as e:
@@ -579,8 +589,8 @@ class ArticleListView(generics.ListAPIView):
     # 1. ИЗМЕНЕНИЕ: Добавляем OrderingFilter и разрешаем сортировку по просмотрам
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
     search_fields = ['title', 'content']
-    ordering_fields = ['published_at', 'views_count']
-    ordering = ['-published_at'] # Сортировка по умолчанию
+    ordering_fields = ['published_at', 'views_count', 'is_featured']
+    ordering = ['-is_featured', '-published_at'] # Сначала закрепленные, потом новые
 
     def get_queryset(self):
         """Формирует основной queryset статей на основе параметров запроса."""
@@ -644,3 +654,130 @@ class ArticleIncrementViewCountView(APIView):
             return Response(status=status.HTTP_200_OK)
         except Article.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+# --- ЗАГРУЗКА ИЗОБРАЖЕНИЙ ДЛЯ TINYMCE ---
+import os
+import uuid
+from PIL import Image as PILImage
+from django.http import JsonResponse
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
+# Регистрируем поддержку HEIF/HEIC формата
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass  # pillow-heif не установлен, HEIF не будет поддерживаться
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TinyMCEImageUploadView(View):
+    """
+    Обрабатывает загрузку изображений из редактора TinyMCE.
+    - Валидирует тип файла (JPEG, PNG, WEBP, GIF, HEIF/HEIC)
+    - Ограничивает размер до 15MB
+    - Конвертирует в WebP для оптимизации
+    - Изменяет размер до максимум 1200px по ширине
+    - Доступно только для администраторов
+    """
+    MAX_FILE_SIZE = 15 * 1024 * 1024  # 15MB
+    ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif']
+    ALLOWED_TYPES = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+        'image/heic', 'image/heif', 'application/octet-stream'  # octet-stream для некоторых браузеров
+    ]
+
+    def post(self, request, *args, **kwargs):
+        # Проверяем аутентификацию (только для админов)
+        if not request.user.is_authenticated:
+            logger.warning("TinyMCE upload: Unauthenticated user attempt")
+            return JsonResponse({'error': 'Необходимо войти в систему'}, status=401)
+        
+        if not request.user.is_staff:
+            logger.warning(f"TinyMCE upload: Non-staff user {request.user.username} attempt")
+            return JsonResponse({'error': 'Доступ запрещён. Требуются права администратора.'}, status=403)
+
+        if 'file' not in request.FILES:
+            logger.warning("TinyMCE upload: No file in request")
+            return JsonResponse({'error': 'Файл не был отправлен. Попробуйте ещё раз.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        original_filename = uploaded_file.name or 'unknown'
+        
+        logger.info(f"TinyMCE upload: Processing file '{original_filename}' ({uploaded_file.size} bytes, type: {uploaded_file.content_type})")
+
+        # Валидация расширения файла
+        ext = original_filename.lower().split('.')[-1] if '.' in original_filename else ''
+        if ext not in self.ALLOWED_EXTENSIONS:
+            logger.warning(f"TinyMCE upload: Invalid extension '{ext}'")
+            return JsonResponse({
+                'error': f"Неподдерживаемый формат файла (.{ext}). Разрешены: JPG, PNG, WebP, GIF, HEIC, HEIF"
+            }, status=400)
+
+        # Валидация размера
+        if uploaded_file.size > self.MAX_FILE_SIZE:
+            size_mb = uploaded_file.size / (1024 * 1024)
+            logger.warning(f"TinyMCE upload: File too large ({size_mb:.1f}MB)")
+            return JsonResponse({
+                'error': f"Файл слишком большой ({size_mb:.1f} МБ). Максимальный размер: 15 МБ"
+            }, status=400)
+
+        # Генерируем уникальное имя файла
+        filename = f"{uuid.uuid4().hex}.webp"
+        save_path = os.path.join('articles', 'content', filename)
+        full_path = os.path.join(settings.MEDIA_ROOT, save_path)
+
+        # Создаём директорию, если не существует
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
+        try:
+            # Открываем и обрабатываем изображение
+            with PILImage.open(uploaded_file) as img:
+                logger.info(f"TinyMCE upload: Image opened, size {img.width}x{img.height}, mode {img.mode}")
+                
+                # Изменяем размер, если ширина больше 1200px
+                if img.width > 1200:
+                    ratio = 1200 / img.width
+                    new_height = int(img.height * ratio)
+                    img = img.resize((1200, new_height), PILImage.LANCZOS)
+                    logger.info(f"TinyMCE upload: Resized to {img.width}x{img.height}")
+
+                # Конвертируем в RGB (необходимо для WebP)
+                if img.mode in ('RGBA', 'P', 'LA'):
+                    background = PILImage.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'P':
+                        img = img.convert('RGBA')
+                    background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                    img = background
+                elif img.mode != 'RGB':
+                    img = img.convert('RGB')
+
+                # Сохраняем в WebP
+                img.save(full_path, 'WEBP', quality=85)
+                logger.info(f"TinyMCE upload: Saved as {filename}")
+
+            # Формируем абсолютный URL
+            image_url = request.build_absolute_uri(f'{settings.MEDIA_URL}{save_path}')
+
+            return JsonResponse({'location': image_url})
+
+        except PILImage.UnidentifiedImageError as e:
+            logger.error(f"TinyMCE upload: Cannot identify image file '{original_filename}': {e}")
+            return JsonResponse({
+                'error': 'Не удалось открыть изображение. Файл повреждён или имеет неподдерживаемый формат.'
+            }, status=400)
+        
+        except OSError as e:
+            logger.error(f"TinyMCE upload: OS error processing '{original_filename}': {e}")
+            return JsonResponse({
+                'error': 'Ошибка при сохранении файла. Попробуйте ещё раз.'
+            }, status=500)
+        
+        except Exception as e:
+            logger.error(f"TinyMCE upload: Unexpected error processing '{original_filename}': {e}", exc_info=True)
+            return JsonResponse({
+                'error': 'Произошла непредвиденная ошибка. Попробуйте загрузить другое изображение.'
+            }, status=500)

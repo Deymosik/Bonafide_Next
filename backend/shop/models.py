@@ -1,13 +1,13 @@
 # backend/shop/models.py
 from django.db import models
 from django.utils import timezone
-from django_ckeditor_5.fields import CKEditor5Field
+from tinymce.models import HTMLField
 from django.db.models import Case, When, F, DecimalField
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFit
 from colorfield.fields import ColorField
 from django.contrib.auth.models import User
-from django.utils.text import slugify
+from pytils.translit import slugify
 from django.utils.html import strip_tags
 import math # Импортируем math для округления
 
@@ -115,6 +115,15 @@ class ProductCharacteristic(models.Model):
 class Product(models.Model):
     name = models.CharField("Название товара", max_length=200)
 
+    slug = models.SlugField(
+        "URL-slug",
+        max_length=255,
+        unique=True,
+        blank=True,
+        db_index=True,
+        help_text="Уникальная ссылка. Оставьте пустым для автогенерации из названия."
+    )
+
     # 1. ИЗМЕНЕНИЕ: Поле SKU
     sku = models.CharField(
         "Артикул (SKU)",
@@ -144,7 +153,7 @@ class Product(models.Model):
         blank=True,
         help_text="Укажите дату и время окончания акции. После этого товар перестанет быть 'Товаром дня'."
     )
-    description = CKEditor5Field("Описание", config_name='default')
+    description = HTMLField("Описание")
 
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products", verbose_name="Категория")
     info_panels = models.ManyToManyField(InfoPanel, blank=True, verbose_name="Информационные панельки")
@@ -186,28 +195,27 @@ class Product(models.Model):
 
     # 2. ИЗМЕНЕНИЕ: Метод save для автогенерации SKU на основе ID
     def save(self, *args, **kwargs):
-        # 1. Если это создание нового товара, сначала сохраняем его,
-        # чтобы получить уникальный ID (pk) от базы данных.
-        if self.pk is None:
-            super().save(*args, **kwargs)
+        # Логика генерации Slug
+        if not self.slug:
+            # Используем pytils для перевода 'Привет мир' в 'privet-mir'
+            self.slug = slugify(self.name)
 
-        # 2. Если артикул не заполнен (менеджером вручную)
-        if not self.sku:
-            # Генерируем формат BF- + 8 цифр (заполняем нулями слева)
-            # Например, если ID=5, будет BF-00000005
+            # Проверка на уникальность (если slug уже занят другим товаром)
+            original_slug = self.slug
+            counter = 1
+            while Product.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+
+        # Сохраняем объект один раз, чтобы получить ID (если это создание)
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        # Логика генерации SKU на основе полученного ID (если SKU не задан вручную)
+        if is_new and not self.sku:
             self.sku = f"BF-{self.pk:08d}"
-
-            # Сохраняем только поле sku, чтобы не перегружать базу
-            # (kwargs.pop('force_insert', None) нужен, чтобы избежать ошибок Django при повторном сохранении)
-            kwargs.pop('force_insert', None)
-            super().save(update_fields=['sku'])
-        else:
-            # Если это обычное обновление товара, и мы не заходили в первый блок if (pk не None)
-            # или если SKU был задан вручную при создании.
-            # Если мы зашли в первый блок (pk is None), мы уже сохранили товар.
-            # Чтобы избежать дублирования сохранения при создании с ручным SKU:
-            if self.pk and not kwargs.get('force_insert'):
-                 super().save(*args, **kwargs)
+            # Используем update_fields для производительности, чтобы не вызывать повторно полный save()
+            Product.objects.filter(pk=self.pk).update(sku=self.sku)
 
     class Meta:
         verbose_name = "Товар"
@@ -323,10 +331,23 @@ class DiscountRule(models.Model):
 class ShopSettings(models.Model):
 
     manager_username = models.CharField("Юзернейм менеджера в Telegram", max_length=100, help_text="Без @", default="username")
-    contact_phone = models.CharField("Контактный телефон", max_length=20, blank=True)
-    about_us_section = CKEditor5Field("Блок 'О нас'", blank=True, help_text="Краткий рассказ о магазине", config_name='default')
-    delivery_section = CKEditor5Field("Блок 'Условия доставки'", blank=True, config_name='default')
-    warranty_section = CKEditor5Field("Блок 'Гарантия и возврат'", blank=True, config_name='default')
+    
+    # --- Новые поля для White-Label ---
+    telegram_channel_url = models.URLField("Ссылка на Telegram канал/бот", blank=True, help_text="Например: https://t.me/your_shop")
+    
+    # --- Поле для уведомлений о заказах ---
+    manager_telegram_chat_id = models.BigIntegerField(
+        "Telegram Chat ID менеджера",
+        null=True, blank=True,
+        help_text="Для получения ID: отправьте /start боту, затем узнайте свой ID через @userinfobot. Сюда будут приходить уведомления о заказах."
+    )
+    
+    logo = models.ImageField("Логотип магазина", upload_to='settings/', blank=True, null=True, help_text="Используется в Schema.org")
+    og_default_image = models.ImageField("OG Image по умолчанию", upload_to='settings/', blank=True, null=True, help_text="Картинка для соцсетей, если страница не имеет своей")
+    
+    about_us_section = HTMLField("Блок 'О нас'", blank=True, help_text="Краткий рассказ о магазине")
+    delivery_section = HTMLField("Блок 'Условия доставки'", blank=True)
+    warranty_section = HTMLField("Блок 'Гарантия и возврат'", blank=True)
     free_shipping_threshold = models.DecimalField("Порог бесплатной доставки", max_digits=10, decimal_places=2, null=True, blank=True, help_text="Оставьте пустым или 0, чтобы отключить эту функцию")
     search_placeholder = models.CharField("Плейсхолдер в строке поиска", max_length=150, default="Найти чехол или наушники...")
     search_initial_text = models.CharField("Текст до начала поиска", max_length=255, default="Начните вводить, чтобы найти товар")
@@ -377,8 +398,8 @@ class ShopSettings(models.Model):
     seo_description_checkout = models.TextField("SEO Description для Оформления заказа", blank=True, default="Заполните данные для завершения вашего заказа в {{site_name}}.")
 
 
-    privacy_policy = CKEditor5Field("Политика конфиденциальности", blank=True, config_name='default')
-    public_offer = CKEditor5Field("Публичная оферта", blank=True, config_name='default')
+    privacy_policy = HTMLField("Политика конфиденциальности", blank=True)
+    public_offer = HTMLField("Публичная оферта", blank=True)
 
     def __str__(self):
         return "Настройки магазина"
@@ -396,7 +417,7 @@ class ShopSettings(models.Model):
 # --- Модель FaqItem (без изменений) ---
 class FaqItem(models.Model):
     question = models.CharField("Вопрос", max_length=255)
-    answer = CKEditor5Field("Ответ", config_name='default')
+    answer = HTMLField("Ответ")
     order = models.PositiveIntegerField("Порядок сортировки", default=0, help_text="Чем меньше число, тем выше будет вопрос")
     is_active = models.BooleanField("Активен", default=True)
 
@@ -558,6 +579,10 @@ class Article(models.Model):
 
     # --- Основное содержимое ---
     title = models.CharField("Заголовок статьи", max_length=200)
+    # SEO fields
+    meta_description = models.TextField("Meta Description (для SEO)", max_length=160, blank=True, help_text="Краткое описание для Google и Яндекс (до 160 символов). Очень важно для привлечения пользователей.")
+    og_image = models.ImageField("Open Graph Image (для соцсетей)", upload_to='articles/og/', blank=True, help_text="Персональная картинка для репостов. Если пусто, используется обложка статьи.")
+    canonical_url = models.URLField("Canonical URL", blank=True, help_text="Оставьте пустым, если это оригинальная статья. Заполняйте ТОЛЬКО если это перепечатка (кросспостинг) — укажите здесь ссылку на первоисточник, чтобы избежать санкций поисковиков за дублирующийся контент.")
     slug = models.SlugField("URL-slug", max_length=220, unique=True, blank=True, help_text="Человекопонятный URL. Генерируется из заголовка, но можно отредактировать. Пример: 'kak-vybrat-naushniki'")
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Автор")
     published_at = models.DateTimeField("Дата публикации", default=timezone.now)
@@ -579,7 +604,7 @@ class Article(models.Model):
     # --- ВОТ ВТОРОЕ НЕДОСТАЮЩЕЕ ПОЛЕ ---
     content_type = models.CharField("Тип контента", max_length=10, choices=ContentType.choices, default=ContentType.INTERNAL)
 
-    content = CKEditor5Field("Содержимое статьи", config_name='default', blank=True, help_text="Для 'Внутренней статьи'. <b>ВАЖНО:</b> перед загрузкой изображений в редактор, сожмите их с помощью онлайн-сервисов (например, TinyPNG) до размера < 1 МБ.")
+    content = HTMLField("Содержимое статьи", blank=True, help_text="Для 'Внутренней статьи'. Изображения до 15 МБ автоматически оптимизируются при загрузке.")
     # ИСПРАВЛЕНИЕ: Убрали дублирующийся verbose_name в конце
     external_url = models.URLField("URL внешней статьи", blank=True, help_text="Для 'Внешней ссылки'. Укажите полный URL, например, https://example.com/article")
 

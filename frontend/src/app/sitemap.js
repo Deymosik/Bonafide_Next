@@ -1,22 +1,25 @@
 // frontend/src/app/sitemap.js
 import { fetchServerData } from '@/lib/serverUtils';
 
-// Базовый URL вашего сайта (фронтенда)
-const BASE_URL = 'https://bf55.ru'; // ЗАМЕНИТЕ НА ВАШ ДОМЕН
+// Базовый URL вашего сайта (из .env)
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
 
 export default async function sitemap() {
-    // 1. Получаем все товары (нужно, чтобы API поддерживал пагинацию или all)
-    // Для карты сайта лучше сделать отдельный легкий эндпоинт на бэке, но пока возьмем список
-    const productsData = await fetchServerData('/products/?page_size=1000');
-    const articlesData = await fetchServerData('/articles/?page_size=1000');
+    // Опции кеширования: обновлять sitemap каждый час
+    const cacheOptions = { next: { revalidate: 3600 } };
+
+    // 1. Получаем все товары и статьи с кешированием
+    const productsData = await fetchServerData('/products/?page_size=1000', cacheOptions);
+    const articlesData = await fetchServerData('/articles/?page_size=1000', cacheOptions);
 
     const products = productsData?.results || [];
-    const articles = articlesData?.results || [];
+    // API для статей возвращает вложенную структуру: { articles: { results: [...] } }
+    const articles = articlesData?.articles?.results || articlesData?.results || [];
 
     // 2. Формируем URL для товаров
     const productUrls = products.map((product) => ({
-        url: `${BASE_URL}/products/${product.id}`,
-        lastModified: new Date(product.created_at || Date.now()), // Лучше добавить updated_at в API
+        url: `${BASE_URL}/products/${product.slug}`,
+        lastModified: new Date(product.created_at || Date.now()),
         changeFrequency: 'daily',
         priority: 0.8,
     }));

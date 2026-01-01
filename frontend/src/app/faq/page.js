@@ -1,5 +1,5 @@
-// src/app/faq/page.js
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Кешируем страницу на 1 час
+
 import React from 'react';
 import FaqPageClient from '@/components/FaqPageClient';
 // Импортируем наши централизованные утилиты
@@ -27,9 +27,8 @@ export async function generateMetadata() {
 }
 
 export default async function FaqPage() {
-    // Используем общую функцию запроса данных
-    // Если нужно кэширование, его лучше настроить внутри serverUtils или на уровне CDN
-    const faqItems = await fetchServerData('/faq/');
+    // Используем общую функцию запроса данных с кешированием на 1 час
+    const faqItems = await fetchServerData('/faq/', { next: { revalidate: 3600 } });
 
     return <FaqPageClient faqItems={faqItems || []} />;
 }

@@ -1,6 +1,6 @@
 // frontend/src/app/robots.js
 
-const BASE_URL = 'https://bf55.ru'; // ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ ДОМЕН
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
 
 export default function robots() {
     return {

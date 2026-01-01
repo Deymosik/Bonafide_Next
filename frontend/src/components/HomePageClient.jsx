@@ -145,13 +145,13 @@ export default function HomePageClient({
 
             {/* Баннеры: Если данных нет, показываем скелетон (хотя с SSR данные уже должны быть) */}
             {banners && banners.length > 0 ? (
-                <PromoCarousel banners={banners} />
+                <PromoCarousel banners={banners}/>
             ) : (
-                <PromoCarouselSkeleton />
+                <PromoCarouselSkeleton/>
             )}
 
             {/* Товар дня */}
-            {dealProduct && <DealOfTheDay product={dealProduct} />}
+            {dealProduct && <DealOfTheDay product={dealProduct}/>}
 
             {/* Верхняя панель: Поиск и Фильтр */}
             {/* sticky-top-safe - глобальный класс, styles['top-bar'] - локальный */}
@@ -168,7 +168,7 @@ export default function HomePageClient({
                     onClick={() => setIsFiltersOpen(true)}
                     aria-label="Фильтры"
                 >
-                    <FilterIcon />
+                    <FilterIcon/>
                 </button>
             </div>
 
@@ -183,11 +183,13 @@ export default function HomePageClient({
 
                     return (
                         <div
-                            key={product.id}
+                            key={product.id} // key лучше оставить ID, так как он гарантированно уникален
                             ref={isLast ? lastProductElementRef : null}
                         >
-                            <Link href={`/products/${product.id}`} className={styles['product-link']}>
-                                {/* Передаем priority в компонент */}
+                            {/* --- ИЗМЕНЕНИЕ ЗДЕСЬ --- */}
+                            {/* Было: href={`/products/${product.id}`} */}
+                            {/* Стало: href={`/products/${product.slug}`} */}
+                            <Link href={`/products/${product.slug}`} className={styles['product-link']}>
                                 <ProductCard
                                     product={product}
                                     priority={isPriority}
@@ -199,7 +201,7 @@ export default function HomePageClient({
 
                 {/* Скелетоны при подгрузке (Infinite Scroll) */}
                 {loadingMore && (
-                    [...Array(2)].map((_, i) => <ProductCardSkeleton key={`skeleton-more-${i}`} />)
+                    [...Array(2)].map((_, i) => <ProductCardSkeleton key={`skeleton-more-${i}`}/>)
                 )}
             </div>
 

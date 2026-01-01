@@ -132,6 +132,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = (
             'id',
+            'slug',
             'sku',
             'name',
             'price', # Текущая (финальная) цена
@@ -154,7 +155,7 @@ class ColorVariationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'main_image_thumbnail_url')
+        fields = ('id', 'slug', 'main_image_thumbnail_url')
 
     def get_main_image_thumbnail_url(self, obj):
         request = self.context.get('request')
@@ -179,7 +180,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = (
-            'id', 'sku', 'name', 'description',
+            'id', 'slug', 'sku', 'name', 'description',
             'price', # Актуальная цена для покупки
             'regular_price', # Обычная цена (для зачеркивания)
             'deal_price', # Акционная цена
@@ -235,14 +236,17 @@ class ShopSettingsSerializer(serializers.ModelSerializer):
     images = ShopImageSerializer(many=True, read_only=True)
     search_lottie_url = serializers.SerializerMethodField()
     cart_lottie_url = serializers.SerializerMethodField()
+    logo_url = serializers.SerializerMethodField()
+    og_default_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ShopSettings
         fields = (
-            'manager_username', 'contact_phone', 'about_us_section',
+            'manager_username', 'telegram_channel_url', 'about_us_section',
             'delivery_section', 'warranty_section', 'images', 'free_shipping_threshold',
             'search_placeholder', 'search_initial_text', 'search_lottie_url', 'cart_lottie_url', 'article_font_family',
-            'public_offer', 'privacy_policy', 'site_name','seo_title_home', 'seo_description_home',
+            'public_offer', 'privacy_policy', 'site_name', 'logo_url', 'og_default_image_url',
+            'seo_title_home', 'seo_description_home',
             'seo_title_blog', 'seo_description_blog', 'seo_title_product', 'seo_description_product',
             'seo_title_cart', 'seo_description_cart', 'seo_title_faq', 'seo_description_faq',
             'seo_title_checkout', 'seo_description_checkout',
@@ -258,6 +262,18 @@ class ShopSettingsSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if obj.cart_lottie_file and hasattr(obj.cart_lottie_file, 'url'):
             return request.build_absolute_uri(obj.cart_lottie_file.url)
+        return None
+
+    def get_logo_url(self, obj):
+        request = self.context.get('request')
+        if obj.logo and hasattr(obj.logo, 'url'):
+            return request.build_absolute_uri(obj.logo.url)
+        return None
+
+    def get_og_default_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.og_default_image and hasattr(obj.og_default_image, 'url'):
+            return request.build_absolute_uri(obj.og_default_image.url)
         return None
 
 # Сериализатор для FAQ
@@ -400,9 +416,15 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
 class AuthorSerializer(serializers.ModelSerializer):
     """Сериализатор для краткой информации об авторе."""
+    full_name = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('first_name', 'last_name')
+        fields = ('first_name', 'last_name', 'full_name')
+
+    def get_full_name(self, obj):
+        name = f"{obj.first_name} {obj.last_name}".strip()
+        return name if name else obj.username
 
 class ArticleCategorySerializer(serializers.ModelSerializer):
     """Сериализатор для категорий статей."""
@@ -417,7 +439,7 @@ class ArticleListSerializer(ImageUrlBuilderSerializer):
 
     class Meta:
         model = Article
-        fields = ('title', 'slug', 'published_at', 'category', 'cover_image_url')
+        fields = ('title', 'slug', 'published_at', 'category', 'cover_image_url', 'is_featured')
 
     def get_cover_image_url(self, obj):
         return self._get_absolute_url(obj.cover_image_list_thumbnail)
@@ -428,6 +450,7 @@ class ArticleDetailSerializer(ImageUrlBuilderSerializer):
     author = AuthorSerializer(read_only=True)
     related_products = ProductListSerializer(many=True, read_only=True)
     cover_image_url = serializers.SerializerMethodField()
+    og_image_url = serializers.SerializerMethodField()
 
     # 1. ИЗМЕНЕНИЕ: Добавляем поле для времени чтения
     reading_time = serializers.IntegerField(read_only=True)
@@ -437,10 +460,18 @@ class ArticleDetailSerializer(ImageUrlBuilderSerializer):
         fields = (
             'title', 'slug', 'author', 'published_at', 'cover_image_url',
             'content_type', 'content', 'external_url', 'category',
-            'related_products', 'meta_title', 'meta_description',
+            'related_products', 'meta_description',
+            'og_image_url', 'canonical_url',
             'views_count',      # <-- 2. ИЗМЕНЕНИЕ: Добавляем счётчик просмотров
             'reading_time'      # <-- 2. ИЗМЕНЕНИЕ: Добавляем время чтения
         )
 
     def get_cover_image_url(self, obj):
         return self._get_absolute_url(obj.cover_image_detail_thumbnail)
+
+    def get_og_image_url(self, obj):
+        # Если есть специальное OG изображение, возвращаем его
+        if obj.og_image:
+            return self._get_absolute_url(obj.og_image)
+        # Если нет, возвращаем None (фронтенд будет использовать fallback)
+        return None

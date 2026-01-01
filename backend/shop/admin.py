@@ -10,6 +10,7 @@ from datetime import datetime
 from django.contrib import admin, messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django import forms
 from django.urls import path, reverse
 from django.core.management import call_command
@@ -45,6 +46,13 @@ class FeatureInline(admin.TabularInline):
     verbose_name = "Особенность (функционал)"
     verbose_name_plural = "Особенности (функционал)"
     fields = ('name', 'order')
+
+@admin.register(Feature)
+class FeatureAdmin(admin.ModelAdmin):
+    list_display = ('product', 'name', 'order')
+    search_fields = ('name', 'product__name')
+    list_filter = ('product',)
+
 
 class ProductCharacteristicInline(admin.TabularInline):
     model = ProductCharacteristic
@@ -108,23 +116,26 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'sku', 'description', 'characteristics__characteristic__name', 'characteristics__value')
     list_editable = ('is_active',)
 
+    # --- ИЗМЕНЕНИЕ 1: Добавляем автозаполнение (JS скрипт в админке) ---
+    prepopulated_fields = {'slug': ('name',)}
+
     inlines = [
         FeatureInline,
         ProductCharacteristicInline,
         ProductInfoCardInline,
-        ProductImageInline, # Этот инлайн теперь будет показывать уже загруженные фото
+        ProductImageInline,
     ]
 
     fieldsets = (
         ('Основная информация', {
-            'fields': ('name', 'sku', 'color_group', 'category', 'regular_price', 'description', 'is_active')
+            # --- ИЗМЕНЕНИЕ 2: Добавляем 'slug' в список отображаемых полей ---
+            'fields': ('name', 'slug', 'sku', 'color_group', 'category', 'regular_price', 'description', 'is_active')
         }),
         ("Акция 'Товар дня'", {
             'classes': ('collapse',),
             'fields': ('deal_ends_at', 'deal_price')
         }),
         ('Медиафайлы', {
-            # 4. ИЗМЕНЕНИЕ: Добавляем наше новое поле в секцию медиафайлов
             'fields': ('main_image', 'additional_images', 'audio_sample')
         }),
         ('Связи и опции', {
@@ -134,26 +145,13 @@ class ProductAdmin(admin.ModelAdmin):
 
     filter_horizontal = ('related_products', 'info_panels',)
 
-    # 5. ИЗМЕНЕНИЕ: Переопределяем метод сохранения модели
+    # 5. ИЗМЕНЕНИЕ: Переопределяем метод сохранения модели (оставляем без изменений)
     def save_model(self, request, obj, form, change):
-        """
-        Переопределенный метод для сохранения.
-        Сначала сохраняет основной объект (товар),
-        а затем обрабатывает загруженные дополнительные фотографии.
-        """
-        # Сначала вызываем стандартный метод сохранения, чтобы товар сохранился
-        # и получил свой ID (если это новый товар).
         super().save_model(request, obj, form, change)
-
-        # Получаем список файлов из нашего кастомного поля 'additional_images'.
         files = request.FILES.getlist('additional_images')
         if files:
-            # Проходимся по каждому файлу и создаем для него объект ProductImage,
-            # связывая его с только что сохраненным товаром (obj).
             for f in files:
                 ProductImage.objects.create(product=obj, image=f)
-
-            # Выводим сообщение об успехе в админ-панели.
             self.message_user(request, f"Успешно загружено {len(files)} дополнительных фотографий.", messages.SUCCESS)
 
     @admin.display(description='Товар дня?', boolean=True)
@@ -180,35 +178,112 @@ class ProductAdmin(admin.ModelAdmin):
             )
             return
 
-        for product in queryset:
-            related_products = list(product.related_products.all())
-            info_panels = list(product.info_panels.all())
-            images_to_copy = list(product.images.all())
-            cards_to_copy = list(product.info_cards.all())
+        from django.core.files.base import ContentFile
+        
+        duplicated_count = 0
+        for original_product in queryset:
+            try:
+                # Сохраняем связанные объекты до копирования
+                related_products = list(original_product.related_products.all())
+                info_panels = list(original_product.info_panels.all())
+                images_to_copy = list(original_product.images.all())
+                cards_to_copy = list(original_product.info_cards.all())
+                features_to_copy = list(original_product.features.all())
 
-            product.pk = None
-            product.name = f"{product.name} (копия)"
-            product.is_active = False
-            product.save()
+                # Копируем главное изображение
+                main_image_copy = None
+                if original_product.main_image:
+                    main_image_copy = ContentFile(original_product.main_image.read())
+                    main_image_copy.name = original_product.main_image.name.split('/')[-1]
+                    original_product.main_image.seek(0)  # Сброс указателя файла
+                
+                # Копируем аудио
+                audio_copy = None
+                if original_product.audio_sample:
+                    audio_copy = ContentFile(original_product.audio_sample.read())
+                    audio_copy.name = original_product.audio_sample.name.split('/')[-1]
+                    original_product.audio_sample.seek(0)
 
-            product.related_products.set(related_products)
-            product.info_panels.set(info_panels)
+                # Создаём копию товара
+                new_product = Product(
+                    name=f"{original_product.name} (копия)",
+                    slug=None,  # Автогенерация
+                    sku=None,   # Автогенерация
+                    regular_price=original_product.regular_price,
+                    deal_price=original_product.deal_price,
+                    deal_ends_at=original_product.deal_ends_at,
+                    description=original_product.description,
+                    category=original_product.category,
+                    is_active=False,
+                    color_group=original_product.color_group,
+                )
+                
+                if main_image_copy:
+                    new_product.main_image = main_image_copy
+                if audio_copy:
+                    new_product.audio_sample = audio_copy
+                    
+                new_product.save()
 
-            for image in images_to_copy:
-                image.pk = None
-                image.product = product
-                image.save()
+                # Восстанавливаем ManyToMany связи
+                new_product.related_products.set(related_products)
+                new_product.info_panels.set(info_panels)
 
-            for card in cards_to_copy:
-                card.pk = None
-                card.product = product
-                card.save()
+                # Копируем дополнительные изображения
+                for image in images_to_copy:
+                    if image.image:
+                        image_copy = ContentFile(image.image.read())
+                        image_copy.name = image.image.name.split('/')[-1]
+                        image.image.seek(0)
+                        
+                        ProductImage.objects.create(
+                            product=new_product,
+                            image=image_copy
+                        )
 
-        self.message_user(
-            request,
-            f"Успешно создано {queryset.count()} копий товаров.",
-            messages.SUCCESS
-        )
+                # Копируем инфо-карточки
+                for card in cards_to_copy:
+                    if card.image:
+                        card_image_copy = ContentFile(card.image.read())
+                        card_image_copy.name = card.image.name.split('/')[-1]
+                        card.image.seek(0)
+                        
+                        ProductInfoCard.objects.create(
+                            product=new_product,
+                            title=card.title,
+                            image=card_image_copy,
+                            link_url=card.link_url
+                        )
+                    else:
+                        ProductInfoCard.objects.create(
+                            product=new_product,
+                            title=card.title,
+                            link_url=card.link_url
+                        )
+
+                # Копируем фичи
+                from .models import Feature
+                for feature in features_to_copy:
+                    Feature.objects.create(
+                        product=new_product,
+                        name=feature.name
+                    )
+
+                duplicated_count += 1
+                
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f"Ошибка при дублировании '{original_product.name}': {str(e)}",
+                    messages.ERROR
+                )
+
+        if duplicated_count > 0:
+            self.message_user(
+                request,
+                f"Успешно создано {duplicated_count} копий товаров.",
+                messages.SUCCESS
+            )
 
 # --- Остальные классы вашей админ-панели остаются без изменений ---
 
@@ -288,10 +363,15 @@ class DiscountRuleAdmin(admin.ModelAdmin):
 @admin.register(ShopSettings)
 class ShopSettingsAdmin(admin.ModelAdmin):
     inlines = [ShopImageInline]
+    
+    class Media:
+        css = {
+            'all': ('shop/css/admin_custom.css',)
+        }
 
     fieldsets = (
-        ('Основные настройки', {
-            'fields': ('manager_username', 'contact_phone')
+        ('Основные настройки и брендинг', {
+            'fields': ('site_name', 'manager_username', 'manager_telegram_chat_id', 'telegram_channel_url', 'logo', 'og_default_image')
         }),
         ('Настройки страниц', {
             'classes': ('collapse',),
@@ -311,7 +391,6 @@ class ShopSettingsAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'description': "Управление мета-тегами для страниц. Вы можете использовать переменные, например <b>{{site_name}}</b>. Для страницы товара также доступны <b>{{product_name}}</b> и <b>{{product_price}}</b>.",
             'fields': (
-                'site_name',
                 'seo_title_home', 'seo_description_home',
                 'seo_title_blog', 'seo_description_blog',
                 'seo_title_product', 'seo_description_product',
@@ -447,7 +526,7 @@ class ArticleAdmin(admin.ModelAdmin):
     # 1. ИЗМЕНЕНИЕ: Добавляем 'is_featured' и 'views_count' в список для удобства
     list_display = ('title', 'category', 'status', 'is_featured', 'views_count', 'published_at')
     list_filter = ('status', 'category', 'is_featured', 'author', 'published_at')
-    search_fields = ('title', 'content', 'meta_title', 'meta_description')
+    search_fields = ('title', 'content', 'meta_description')
     # 2. ИЗМЕНЕНИЕ: Позволяем быстро менять статус и закреплять статью
     list_editable = ('status', 'is_featured')
     prepopulated_fields = {'slug': ('title',)}
@@ -457,21 +536,16 @@ class ArticleAdmin(admin.ModelAdmin):
     # 1. ИЗМЕНЕНИЕ: Добавляем описания (description) к fieldsets
     fieldsets = (
         ('Основное', {
-            'fields': ('title', 'slug', 'status', 'is_featured', 'published_at', 'category', 'author')
+            'fields': ('title', 'slug', 'meta_description', 'status', 'is_featured', 'published_at', 'category', 'author', 'canonical_url')
         }),
         ('Контент', {
             'description': "<h3>Шаг 1: Выберите тип контента.</h3><p>Затем заполните <b>только одно</b> из двух полей ниже: либо напишите текст в редакторе, либо вставьте внешнюю ссылку.</p>",
-            'fields': ('content_type', 'cover_image', 'content', 'external_url')
+            'fields': ('content_type', 'cover_image', 'og_image', 'content', 'external_url')
         }),
         ('Связанные товары (Опционально)', {
             'classes': ('collapse',),
             'description': "<h3>Шаг 2: Увеличьте продажи!</h3><p>Выберите товары, которые тематически подходят к статье. Они будут показаны читателю.</p>",
             'fields': ('related_products',)
-        }),
-        ('Настройки SEO (Очень важно!)', {
-            'classes': ('collapse',),
-            'description': "<h3>Шаг 3: Привлеките читателей из Google и Яндекс.</h3><p>Эти поля напрямую влияют на то, как ваша статья будет выглядеть в поисковой выдаче.</p>",
-            'fields': ('meta_title', 'meta_description')
         }),
     )
 
