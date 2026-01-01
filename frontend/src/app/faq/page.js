@@ -1,4 +1,5 @@
 export const revalidate = 3600; // Кешируем страницу на 1 час
+export const dynamic = 'force-dynamic';
 
 import React from 'react';
 import FaqPageClient from '@/components/FaqPageClient';
