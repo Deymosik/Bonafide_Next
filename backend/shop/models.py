@@ -120,7 +120,6 @@ class Product(models.Model):
         max_length=255,
         unique=True,
         blank=True,
-        null=True,
         db_index=True,
         help_text="Уникальная ссылка. Оставьте пустым для автогенерации из названия."
     )

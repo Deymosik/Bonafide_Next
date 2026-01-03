@@ -25,6 +25,10 @@ RUN adduser --disabled-password --gecos "" appuser
 COPY --chown=appuser:appuser entrypoint.sh /entrypoint.sh
 COPY --chown=appuser:appuser . .
 
+# Явно создаем папки для статики и медиа и отдаем их appuser
+RUN mkdir -p /app/staticfiles /app/media && \
+    chown -R appuser:appuser /app/staticfiles /app/media
+
 # Указываем, что будем работать от имени appuser
 USER appuser
 
