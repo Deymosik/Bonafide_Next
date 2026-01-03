@@ -40,7 +40,10 @@ ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')]
 # Эти настройки включаются только когда DEBUG=False
 if not DEBUG:
     # HTTPS/SSL
-    SECURE_SSL_REDIRECT = True  # Перенаправлять HTTP → HTTPS
+    # ВАЖНО: Отключаем редирект на уровне Django, так как Nginx сам делает редирект для внешних клиентов.
+    # Если оставить True, то внутренние запросы от Frontend (http://backend:8000) будут получать 301 https://...
+    # и падать с ошибкой (так как внутри Docker нет SSL).
+    SECURE_SSL_REDIRECT = False
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Для работы за reverse proxy
     
     # HSTS (HTTP Strict Transport Security)
