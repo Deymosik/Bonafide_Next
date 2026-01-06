@@ -14,7 +14,9 @@
     */
     padding-bottom: 75px;
 }
+
 /* Этот класс добавляется, когда TabBar виден, чтобы контент не перекрывался меню */
 .with-tab-bar {
-    padding-bottom: 75px; /* Высота TabBar (50px) + безопасная зона + запас */
+    padding-bottom: 75px;
+    /* Высота TabBar (50px) + безопасная зона + запас */
 }

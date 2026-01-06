@@ -11,7 +11,8 @@
     /* Ограничиваем ширину */
     max-width: var(--desktop-max-width);
 
-    height: 60px; /* Чуть выше стандартного */
+    height: 60px;
+    /* Чуть выше стандартного */
     background-color: var(--app-secondary-bg-color);
 
     display: flex;
@@ -31,7 +32,7 @@
         min-width: 400px;
         padding: 0 20px;
         border: none;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
 }
 
@@ -45,12 +46,15 @@
     height: 100%;
     color: var(--app-hint-color);
     transition: color 0.2s ease;
-    cursor: pointer; /* Курсор для мыши */
+    cursor: pointer;
+    /* Курсор для мыши */
 }
 
 .tab-bar-item:hover {
-    color: var(--app-text-color); /* Ховер эффект */
+    color: var(--app-text-color);
+    /* Ховер эффект */
 }
+
 .tab-bar-item:hover svg {
     fill: var(--app-text-color);
 }
@@ -77,8 +81,10 @@
     transform: scale(1.1);
     fill: var(--app-button-color);
 }
+
 .tab-bar-item.active:hover {
-    color: var(--app-button-color); /* Убираем ховер для активного */
+    color: var(--app-button-color);
+    /* Убираем ховер для активного */
 }
 
 /* Badge */

@@ -37,7 +37,8 @@
     text-align: center;
     padding: 40px 20px;
     color: var(--app-hint-color);
-    grid-column: 1 / -1; /* Занимает всю ширину грида */
+    grid-column: 1 / -1;
+    /* Занимает всю ширину грида */
 }
 
 .end-of-list {
@@ -47,8 +48,10 @@
 }
 
 .product-link {
-    text-decoration: none; /* Убираем подчеркивание */
-    color: inherit; /* Наследуем цвет текста */
+    text-decoration: none;
+    /* Убираем подчеркивание */
+    color: inherit;
+    /* Наследуем цвет текста */
 }
 
 /* --- ПЛАВАЮЩАЯ КНОПКА КОРЗИНЫ --- */
@@ -88,8 +91,10 @@
     position: absolute;
     top: 0;
     right: 0;
-    background-color: var(--app-destructive-text-color); /* Используем цвет для "опасных" или акцентных действий */
-    color: var(--app-button-text-color); /* Предполагаем, что контрастный цвет для кнопок (обычно белый) подойдет */
+    background-color: var(--app-destructive-text-color);
+    /* Используем цвет для "опасных" или акцентных действий */
+    color: var(--app-button-text-color);
+    /* Предполагаем, что контрастный цвет для кнопок (обычно белый) подойдет */
     width: 22px;
     height: 22px;
     border-radius: 50%;
@@ -144,6 +149,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
 .categories-scroll::-webkit-scrollbar {
     display: none;
 }
@@ -184,9 +190,12 @@
     justify-content: space-between;
     align-items: center;
 }
+
 .sort-option:active {
-    background-color: rgba(0,0,0,0.1); /* Оставляем как есть, это цвет состояния, а не темы */
+    background-color: rgba(0, 0, 0, 0.1);
+    /* Оставляем как есть, это цвет состояния, а не темы */
 }
+
 .sort-option.active {
     color: var(--app-button-color);
     font-weight: 600;
@@ -197,9 +206,11 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px; /* Равномерные отступы */
+    padding: 12px;
+    /* Равномерные отступы */
     position: sticky;
-    top: var(--safe-area-inset-top); /* Учитываем "челку" */
+    top: var(--safe-area-inset-top);
+    /* Учитываем "челку" */
     background-color: var(--app-bg-color);
     z-index: 100;
 
@@ -212,7 +223,8 @@
     background: var(--app-secondary-bg-color);
     border: none;
     border-radius: 12px;
-    height: 44px; /* Такая же высота, как у поля поиска */
+    height: 44px;
+    /* Такая же высота, как у поля поиска */
     width: 44px;
     display: flex;
     align-items: center;

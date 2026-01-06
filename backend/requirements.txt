@@ -16,3 +16,4 @@ whitenoise==6.9.0
 python-dotenv==1.1.1
 django-colorfield==0.9.0
 pytils
+requests==2.32.3

@@ -119,7 +119,7 @@ export default function ProductPageClient({ product }) {
                         <div className={styles['info-panels-product']}>
                             {product.info_panels.map(panel => (
                                 <span key={panel.name} className={styles['info-panel']}
-                                      style={{backgroundColor: panel.color, color: panel.text_color}}>
+                                    style={{ backgroundColor: panel.color, color: panel.text_color }}>
                                     {panel.name}
                                 </span>
                             ))}
@@ -205,7 +205,7 @@ export default function ProductPageClient({ product }) {
                     <h2>Описание</h2>
                     <div
                         className={styles['product-description-content']}
-                        dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(product.description)}}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
                     />
                 </div>
 

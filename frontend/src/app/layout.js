@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/context/ThemeProvider";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { ToastProvider } from "@/providers/ToastProvider";
 import TabBar from "@/components/TabBar";
 
 const inter = Inter({
@@ -65,6 +66,7 @@ export default function RootLayout({ children }) {
                 <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
                     <SettingsProvider>
                         <NotificationProvider>
+                            <ToastProvider />
                             <CartProvider>
                                 <div className="app-layout-container">
                                     <main className="layout-content">

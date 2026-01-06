@@ -3,6 +3,7 @@
 
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import debounce from 'lodash.debounce';
+import toast from 'react-hot-toast';
 import apiClient from '@/lib/api';
 import { useTelegram } from '@/utils/telegram';
 
@@ -26,7 +27,7 @@ export const CartProvider = ({ children }) => {
     // userId больше не обязателен для работы корзины, но может пригодиться для аналитики
 
     const totalItems = useMemo(() =>
-            cartItems.reduce((sum, item) => sum + item.quantity, 0),
+        cartItems.reduce((sum, item) => sum + item.quantity, 0),
         [cartItems]);
 
     // Дебаунс для пересчета скидок (чтобы не спамить сервер при быстром клике +/-)
@@ -79,7 +80,7 @@ export const CartProvider = ({ children }) => {
     // --- OPTIMISTIC UPDATE LOGIC ---
 
     // Хелпер для синхронизации с сервером (в фоне)
-    const syncItemWithServer = useCallback(debounce(async (productId, quantity) => {
+    const syncItemWithServer = useCallback(debounce(async (productId, quantity, previousQty = null) => {
         try {
             if (quantity <= 0) {
                 // Если удалили товар, можно не слать quantity=0, а сразу delete,
@@ -90,11 +91,22 @@ export const CartProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Sync error:", error);
-            // Тут в идеале нужно откатить стейт назад или показать тост об ошибке
+            // Откат состояния при ошибке
+            if (previousQty !== null) {
+                toast.error("Ошибка синхронизации. Возвращаем значение.");
+                setCartItems(prev => {
+                    return prev.map(item =>
+                        item.product.id === productId ? { ...item, quantity: previousQty } : item
+                    );
+                });
+            } else {
+                toast.error("Не удалось сохранить изменения в корзине.");
+            }
         }
-    }, 300), []);
+    }, 500), []);
 
     const addToCart = (product) => {
+        // const toastId = toast.loading('Добавляем...'); // Убрали тост по просьбе пользователя
         setCartItems(prev => {
             const existingIdx = prev.findIndex(item => item.product.id === product.id);
             if (existingIdx >= 0) {
@@ -103,7 +115,8 @@ export const CartProvider = ({ children }) => {
                 newItems[existingIdx] = { ...newItems[existingIdx], quantity: newQty };
 
                 // Синхронизируем
-                syncItemWithServer(product.id, newQty);
+                syncItemWithServer(product.id, newQty, newItems[existingIdx].quantity - 1);
+                // toast.success("Количество обновлено", { id: toastId });
                 return newItems;
             } else {
                 // Новый товар
@@ -117,19 +130,29 @@ export const CartProvider = ({ children }) => {
                 // Добавляем в выбранные автоматически
                 setSelectedItems(prevSel => new Set(prevSel).add(product.id));
 
-                syncItemWithServer(product.id, 1);
+                syncItemWithServer(product.id, 1, 0);
+                // toast.success("Товар в корзине", { id: toastId });
                 return [...prev, newItem];
             }
         });
     };
 
     const updateQuantity = (productId, newQty) => {
-        if (newQty > MAX_QUANTITY) return;
+        if (newQty > MAX_QUANTITY) {
+            toast.error(`Максимум ${MAX_QUANTITY} шт.`);
+            return;
+        }
+
+        let previousQty = 0;
 
         setCartItems(prev => {
+            const currentItem = prev.find(item => item.product.id === productId);
+            previousQty = currentItem ? currentItem.quantity : 0;
+
             if (newQty <= 0) {
                 // Удаление
-                syncItemWithServer(productId, 0);
+                syncItemWithServer(productId, 0, previousQty);
+                // toast.success("Товар удален"); // Можно и без уведомления, визуально и так понятно
                 return prev.filter(item => item.product.id !== productId);
             }
 
@@ -141,7 +164,7 @@ export const CartProvider = ({ children }) => {
         });
 
         if (newQty > 0) {
-            syncItemWithServer(productId, newQty);
+            syncItemWithServer(productId, newQty, previousQty);
         }
     };
 
@@ -171,9 +194,12 @@ export const CartProvider = ({ children }) => {
 
         try {
             await apiClient.delete('/cart/', { data: { product_ids: idsToDelete } });
+            toast.success("Выбранные товары удалены");
         } catch (error) {
             console.error("Delete error:", error);
-            // Тут нужен reload страницы или откат
+            toast.error("Не удалось удалить товары");
+            // Возвращаем удаленные товары, чтобы пользователь видел, что действие не прошло
+            // (Для этого нужно было бы сохранить их копию перед удалением, но пока оставим toast)
         }
     };
 
