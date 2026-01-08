@@ -13,7 +13,8 @@ import styles from './ProductCard.module.css';
 // <Link href={`/products/${product.id}`} ...>
 // на
 // <Link href={`/products/${product.slug}`} ...>
-const ProductCard = ({ product, priority = false }) => {
+// <Link href={`/products/${product.slug}`} ...>
+const ProductCard = ({ product, priority = false, searchQuery = '' }) => {
     if (!product) return null;
 
     const imageUrl = product.main_image_thumbnail_url;
@@ -27,6 +28,27 @@ const ProductCard = ({ product, priority = false }) => {
             currency: 'RUB',
             maximumFractionDigits: 0,
         }).format(value);
+
+    // Функция подсветки текста
+    const highlightText = (text, highlight) => {
+        if (!highlight || !highlight.trim()) {
+            return text;
+        }
+        // Экранируем спецсимволы, чтобы не сломать регулярку
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapeRegExp(highlight)})`, 'gi');
+        const parts = text.split(regex);
+
+        return parts.map((part, index) =>
+            regex.test(part) ? (
+                <span key={index} className={styles.highlight}>
+                    {part}
+                </span>
+            ) : (
+                part
+            )
+        );
+    };
 
     return (
         <div className={styles['product-card']}>
@@ -65,7 +87,9 @@ const ProductCard = ({ product, priority = false }) => {
             </div>
 
             <div className={styles['product-info']}>
-                <h3 className={styles['product-name']}>{product.name}</h3>
+                <h3 className={styles['product-name']}>
+                    {highlightText(product.name, searchQuery)}
+                </h3>
 
                 <div className={styles['price-container']}>
                     {hasDiscount ? (

@@ -6,10 +6,11 @@
 import React from 'react';
 // Импорт SVG как компонента (требует настройки next.config.js, см. ниже)
 import SearchIcon from '../assets/search-icon.svg';
+import CloseIcon from '../assets/close-icon.svg';
 // 2. Импортируем стили как объект
 import styles from './SearchBar.module.css';
 
-const SearchBar = ({ value, onChange, placeholder, inputRef }) => {
+const SearchBar = ({ value, onChange, placeholder, inputRef, isLoading, onClear }) => {
     return (
         // 3. Используем классы из объекта styles
         <div className={styles['search-bar-wrapper']}>
@@ -23,6 +24,17 @@ const SearchBar = ({ value, onChange, placeholder, inputRef }) => {
                 // Логика остается прежней: извлекаем value из события и передаем родителю
                 onChange={(e) => onChange(e.target.value)}
             />
+            {isLoading && <div className={styles['search-bar-loading']} />}
+            {!isLoading && value && (
+                <button
+                    className={styles['search-bar-clear']}
+                    onClick={onClear}
+                    type="button"
+                    aria-label="Очистить поиск"
+                >
+                    <CloseIcon />
+                </button>
+            )}
         </div>
     );
 };

@@ -1,20 +1,23 @@
 # Stage 1: Install dependencies
-FROM node:18-alpine AS deps
+FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+# SECURITY CRITICAL: Do not use legacy-peer-deps. Fix conflicts if any arise.
+RUN npm install
+# or 'npm ci' if lockfile is perfect, but we just updated package.json manually so install is safer to generate new lock
 
 # Stage 2: Build the app
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Переменные окружения для сборки (Next.js "запекает" их внутрь кода)
 ENV NEXT_PUBLIC_SITE_URL=https://bf55.ru
-# Если API на том же домене, можно использовать относительный путь для клиента
-# Но для SSR (server-side) нужен полный путь внутри Docker сети, либо внешний
 ENV NEXT_PUBLIC_API_URL=https://bf55.ru/api
+
+# Disable telemetry during build
+ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN npm run build
 

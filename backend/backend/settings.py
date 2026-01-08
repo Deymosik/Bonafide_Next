@@ -82,6 +82,8 @@ INSTALLED_APPS = [
     'imagekit',
     'django_cleanup.apps.CleanupConfig',
     'colorfield',
+    # Postgres extensions
+    'django.contrib.postgres',
     # Ваше приложение
     'shop',
 ]

@@ -7,7 +7,8 @@
 .search-bar-input {
     width: 100%;
     height: 44px;
-    padding: 0 12px 0 44px; /* Отступ слева для иконки */
+    padding: 0 12px 0 44px;
+    /* Отступ слева для иконки */
     box-sizing: border-box;
     border-radius: 12px;
     border: none;
@@ -32,4 +33,50 @@
     width: 20px;
     height: 20px;
     color: var(--app-hint-color);
+}
+
+.search-bar-loading {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--app-hint-color);
+    border-top: 2px solid var(--app-text-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: translateY(-50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+.search-bar-clear {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: var(--app-hint-color);
+    cursor: pointer;
+    padding: 0;
+}
+
+.search-bar-clear svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
 }

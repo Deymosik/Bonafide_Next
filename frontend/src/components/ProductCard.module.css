@@ -4,7 +4,8 @@
 .product-card {
     display: flex;
     flex-direction: column;
-    background-color: var(--app-secondary-bg-color); /* Цвет фона карточки */
+    background-color: var(--app-secondary-bg-color);
+    /* Цвет фона карточки */
     border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
@@ -12,7 +13,8 @@
 }
 
 .product-card:active {
-    transform: scale(0.98); /* Легкая анимация при нажатии */
+    transform: scale(0.98);
+    /* Легкая анимация при нажатии */
 }
 
 .product-image-container {
@@ -32,7 +34,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Картинка полностью заполняет блок, обрезая лишнее */
+    object-fit: cover;
+    /* Картинка полностью заполняет блок, обрезая лишнее */
 }
 
 .product-info {
@@ -49,24 +52,31 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    height: 2.4em; /* 1.2em * 2 строки */
+    height: 2.4em;
+    /* 1.2em * 2 строки */
 }
 
 .product-price {
     font-size: 18px;
     font-weight: 600;
-    margin: 0; /* Убрали нижний отступ, т.к. панелек под ценой больше нет */
+    margin: 0;
+    /* Убрали нижний отступ, т.к. панелек под ценой больше нет */
     color: var(--app-text-color);
 }
 
 /* ИЗМЕНЕНИЕ: Полностью новые стили для позиционирования панелек */
 .info-panels {
-    position: absolute; /* Позиционируем абсолютно относительно .product-image-container */
-    bottom: 8px;        /* Отступ 8px от нижнего края */
-    right: 8px;         /* Отступ 8px от правого края */
+    position: absolute;
+    /* Позиционируем абсолютно относительно .product-image-container */
+    bottom: 8px;
+    /* Отступ 8px от нижнего края */
+    right: 8px;
+    /* Отступ 8px от правого края */
     display: flex;
-    flex-direction: column; /* Располагаем панельки друг под другом */
-    align-items: flex-end;  /* Выравниваем их по правому краю */
+    flex-direction: column;
+    /* Располагаем панельки друг под другом */
+    align-items: flex-end;
+    /* Выравниваем их по правому краю */
     gap: 4px;
 }
 
@@ -91,15 +101,18 @@
 /* Контейнер для выравнивания цен */
 .price-container {
     display: flex;
-    align-items: baseline; /* Выравниваем по базовой линии текста */
-    gap: 8px; /* Расстояние между ценами */
+    align-items: baseline;
+    /* Выравниваем по базовой линии текста */
+    gap: 8px;
+    /* Расстояние между ценами */
 }
 
 /* Новая (акционная) цена */
 .price-current {
     font-size: 18px;
     font-weight: 600;
-    color: var(--app-button-color); /* Яркий акцентный цвет */
+    color: var(--app-button-color);
+    /* Яркий акцентный цвет */
 }
 
 /* Обычная цена (когда нет скидки) */
@@ -114,5 +127,14 @@
     font-size: 14px;
     font-weight: 500;
     color: var(--app-hint-color);
-    text-decoration: line-through; /* Зачеркивание */
+    text-decoration: line-through;
+    /* Зачеркивание */
+}
+
+.highlight {
+    background-color: var(--app-button-color);
+    /* Или другой цвет подсветки */
+    color: #fff;
+    border-radius: 2px;
+    padding: 0 2px;
 }

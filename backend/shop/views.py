@@ -2,7 +2,7 @@
 import logging
 from django.conf import settings
 from django.utils import timezone
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.db.models import F
 from django.db import transaction
 from django.utils.decorators import method_decorator # Добавлено
@@ -154,7 +154,7 @@ class ProductListView(generics.ListAPIView):
     filter_backends = [
         DjangoFilterBackend,
         filters.OrderingFilter,
-        filters.SearchFilter,
+        # filters.SearchFilter, # ОТКЛЮЧАЕМ стандартный поиск, так как реализовали свой (Full-Text + Trigram)
     ]
     search_fields = ['name', 'description', 'sku']
 
@@ -206,10 +206,47 @@ class ProductListView(generics.ListAPIView):
                 return Product.objects.none()
 
         # 4. ВАЖНАЯ ЧАСТЬ: ПРИМЕНЯЕМ СОРТИРОВКУ И ПОИСК
-        # Мы убрали эту логику из вашего кода, но она должна быть здесь.
-        # DRF filter_backends должны применяться к финальному queryset.
-        for backend in list(self.filter_backends):
-             queryset_with_price = backend().filter_queryset(self.request, queryset_with_price, self)
+        search_query = self.request.query_params.get('search', '').strip()
+        
+        if search_query:
+            from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank, TrigramSimilarity
+            
+            # --- ЛОГИКА ПОИСКА (PostgreSQL Full-Text + Trigram) ---
+            
+            # 1. Полнотекстовый поиск (векторы)
+            # 'name' важнее (вес A), 'sku' (вес A), 'description' (вес B)
+            vector = (
+                SearchVector('name', weight='A') +
+                SearchVector('sku', weight='A') +
+                SearchVector('description', weight='B')
+            )
+            query = SearchQuery(search_query)
+            
+            # 2. Обычная фильтрация + Trigram для опечаток
+            # Мы используем TrigramSimilarity только для сортировки или фильтрации по name,
+            # но Full-Text Search (SearchRank) обычно дает лучшие результаты для фраз.
+            
+            # qs_debug = queryset_with_price.annotate(rank=SearchRank(vector, query), sim=TrigramSimilarity('name', search_query))
+            # for p in qs_debug:
+            #     print(f"DEBUG: {p.name} - Rank: {p.rank} - Sim: {p.sim}")
+
+            queryset_with_price = queryset_with_price.annotate(
+                rank=SearchRank(vector, query),
+                similarity=TrigramSimilarity('name', search_query)
+            ).filter(
+                # Ищем либо по вектору (полное совпадение слов), 
+                # либо по триграммам (совпадение > 10% для опечаток)
+                Q(rank__gte=0.01) | Q(similarity__gt=0.01) 
+            ).order_by('-rank', '-similarity', '-created_at') # Сначала самые релевантные
+            
+            # --- DEBUG SQL & RESULTS ---
+            # (Debug prints removed)
+            # --- END DEBUG ---
+            
+        else:
+            # Если поиска нет, применяем стандартные фильтры DRF (сортировка и т.д.)
+            for backend in list(self.filter_backends):
+                queryset_with_price = backend().filter_queryset(self.request, queryset_with_price, self)
 
         return queryset_with_price
 

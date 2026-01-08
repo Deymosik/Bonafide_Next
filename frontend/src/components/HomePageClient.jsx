@@ -24,13 +24,13 @@ import FilterIcon from '../assets/sort-icon.svg'; // Проверьте, как 
 import styles from '@/components/HomePage.module.css';
 
 export default function HomePageClient({
-                                           banners,
-                                           categories,
-                                           dealProduct,
-                                           initialProducts,
-                                           initialNextPage,
-                                           currentSearchParams
-                                       }) {
+    banners,
+    categories,
+    dealProduct,
+    initialProducts,
+    initialNextPage,
+    currentSearchParams
+}) {
     const router = useRouter();
     const settings = useSettings();
 
@@ -50,6 +50,7 @@ export default function HomePageClient({
     const initialSearch = currentSearchParams?.search || '';
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
+    const [isPending, startTransition] = React.useTransition();
 
     // --- Эффекты ---
 
@@ -60,6 +61,8 @@ export default function HomePageClient({
         setProducts(initialProducts);
         setNextPage(initialNextPage);
         // Также обновляем поле поиска, если URL изменился извне (например, кнопка "назад")
+        // Но только если мы не печатаем прямо сейчас (чтобы фокус не скакал или не стиралось)
+        // Простой вариант: всегда обновляем.
         setSearchTerm(currentSearchParams?.search || '');
     }, [initialProducts, initialNextPage, currentSearchParams]);
 
@@ -75,11 +78,21 @@ export default function HomePageClient({
             } else {
                 params.delete('search');
             }
-            // Используем replace, чтобы не забивать историю браузера каждой буквой,
-            // но для завершенного поиска можно использовать push
-            router.replace(`/?${params.toString()}`, { scroll: false });
+
+            startTransition(() => {
+                // Используем replace, чтобы не забивать историю браузера каждой буквой,
+                // но для завершенного поиска можно использовать push
+                // Опция scroll: false важна, чтобы не скроллить наверх при каждом символе
+                router.replace(`/?${params.toString()}`, { scroll: false });
+            });
         }
     }, [debouncedSearchTerm, router, currentSearchParams]);
+
+    // Обработчик очистки
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        // Эффект с debounce сам подчистит URL
+    };
 
     // --- Логика Бесконечного Скролла ---
 
@@ -145,13 +158,13 @@ export default function HomePageClient({
 
             {/* Баннеры: Если данных нет, показываем скелетон (хотя с SSR данные уже должны быть) */}
             {banners && banners.length > 0 ? (
-                <PromoCarousel banners={banners}/>
+                <PromoCarousel banners={banners} />
             ) : (
-                <PromoCarouselSkeleton/>
+                <PromoCarouselSkeleton />
             )}
 
             {/* Товар дня */}
-            {dealProduct && <DealOfTheDay product={dealProduct}/>}
+            {dealProduct && <DealOfTheDay product={dealProduct} />}
 
             {/* Верхняя панель: Поиск и Фильтр */}
             {/* sticky-top-safe - глобальный класс, styles['top-bar'] - локальный */}
@@ -159,6 +172,8 @@ export default function HomePageClient({
                 <SearchBar
                     value={searchTerm}
                     onChange={(newValue) => setSearchTerm(newValue)}
+                    onClear={handleClearSearch}
+                    isLoading={isPending}
                     // Было: settings.search_placeholder || "Найти товары..."
                     // Стало:
                     placeholder={settings.search_placeholder || "Поиск по названию или артикулу..."}
@@ -168,7 +183,7 @@ export default function HomePageClient({
                     onClick={() => setIsFiltersOpen(true)}
                     aria-label="Фильтры"
                 >
-                    <FilterIcon/>
+                    <FilterIcon />
                 </button>
             </div>
 
@@ -193,6 +208,7 @@ export default function HomePageClient({
                                 <ProductCard
                                     product={product}
                                     priority={isPriority}
+                                    searchQuery={activeFilters.search}
                                 />
                             </Link>
                         </div>
@@ -201,7 +217,7 @@ export default function HomePageClient({
 
                 {/* Скелетоны при подгрузке (Infinite Scroll) */}
                 {loadingMore && (
-                    [...Array(2)].map((_, i) => <ProductCardSkeleton key={`skeleton-more-${i}`}/>)
+                    [...Array(2)].map((_, i) => <ProductCardSkeleton key={`skeleton-more-${i}`} />)
                 )}
             </div>
 
