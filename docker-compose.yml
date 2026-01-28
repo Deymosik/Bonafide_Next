@@ -68,7 +68,7 @@ services:
       - .env
     environment:
       # Добавляем имя контейнера в разрешенные хосты, чтобы Nginx мог проксировать запросы
-      - ALLOWED_HOSTS_STR=127.0.0.1,localhost,bonafide_backend,your-domain.com
+      - ALLOWED_HOSTS_STR=${ALLOWED_HOSTS_STR}
     depends_on:
       db:
         condition: service_healthy
