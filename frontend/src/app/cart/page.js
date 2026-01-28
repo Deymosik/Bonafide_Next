@@ -1,7 +1,7 @@
 // src/app/cart/page.js
 export const dynamic = 'force-dynamic';
 import React from 'react';
-import CartPageClient from '@/components/CartPageClient';
+import CartPageClient from '@/components/checkout/CartPageClient';
 // Импортируем утилиты для получения настроек с бэкенда
 import { getShopSettings, replaceSeoVariables } from '@/lib/serverUtils';
 
@@ -15,7 +15,7 @@ export async function generateMetadata() {
 
     // 2. Подготавливаем переменные для шаблона (например, {{site_name}})
     const seoVars = {
-        site_name: settings?.site_name || 'BonaFide55'
+        site_name: settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop'
     };
 
     // 3. Формируем тексты. Если в админке пусто, используем запасной вариант.

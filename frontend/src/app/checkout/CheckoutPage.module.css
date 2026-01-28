@@ -1,242 +1,45 @@
-/* проект/frontend/src/pages/CheckoutPage.css */
+/* проект/frontend/src/app/checkout/CheckoutPage.module.css */
 .checkout-page {
     padding: 16px;
     background-color: var(--app-bg-color);
-}
-
-.form-title {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0 0 20px 0;
-    color: var(--app-text-color);
-}
-
-.invalid {
-    border-color: var(--app-destructive-text-color);
+    width: 100%;
+    max-width: var(--desktop-max-width, 900px);
+    margin: 0 auto;
+    box-sizing: border-box;
+    /* Critical */
 }
 
 .checkout-form {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding-bottom: 16px;
 }
 
-/* Стили для секций и полей */
-.form-section {
-    background-color: var(--app-secondary-bg-color);
-    border-radius: 12px;
-    padding: 16px;
-    animation: fadeIn 0.5s ease;
-}
-
-.form-section-header {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 0 0 16px 0;
-    color: var(--app-text-color);
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--app-separator-color);
-}
-
-.form-section-title {
-    font-size: 17px;
-    font-weight: 600;
-    margin-bottom: 8px;
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 24px 0;
     color: var(--app-text-color);
 }
 
-.form-field {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+/* Desktop Grid */
+@media (min-width: 1024px) {
+    .checkout-form {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        /* Matching Cart Page */
+        gap: 20px;
+        align-items: start;
+    }
+
+    .checkout-page {
+        padding-bottom: 40px;
+    }
 }
 
-.form-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 6px;
-    color: var(--text-color-secondary);
-}
-
-.form-input {
-    width: 100%;
-    padding: 14px 16px;
-    box-sizing: border-box;
-    border-radius: 12px;
-    border: 1px solid var(--app-secondary-bg-color);
-    background-color: var(--app-bg-color);
-    color: var(--app-text-color);
-    font-size: 16px;
-    transition: border-color 0.2s ease;
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: var(--app-button-color);
-}
-
-.form-input.invalid {
-    border-color: var(--app-destructive-text-color);
-}
-
-.error-message {
-    color: var(--app-destructive-text-color);
-    font-size: 13px;
-    margin: 4px 0 0 8px;
-    animation: fadeIn 0.3s;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.form-section .form-field,
-.form-section .form-grid {
-    margin-bottom: 12px;
-}
-.form-section .form-field:last-child,
-.form-section .form-grid:last-child {
-    margin-bottom: 0;
-}
-
-.delivery-instructions {
-    font-size: 14px;
-    color: var(--app-hint-color);
-    background-color: var(--app-secondary-bg-color);
-    padding: 12px;
-    border-radius: 10px;
-    margin-top: 12px;
-    line-height: 1.4;
-    animation: fadeIn 0.4s ease;
-}
-
-.address-fields-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-top: 16px;
-    animation: fadeIn 0.4s ease;
-}
-
-/* Стили для кнопок доставки */
-.shipping-options {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.shipping-options label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 5px;
-    border-radius: 12px;
-    border: 2px solid var(--app-bg-color);
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 16px;
-    color: var(--app-text-color);
-    background-color: var(--app-bg-color);
-    text-align: center;
-    transition: all 0.2s ease-in-out;
-}
-
-
-
-.shipping-options label.active {
-    background-color: var(--app-bg-color);
-    color: var(--app-button-color);
-    border-color: var(--app-button-color);
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
-}
-
-.shipping-icon {
-    width: auto;          /* Ширина авто, чтобы сохранить пропорции */
-    height: 30px;         /* Фиксированная высота */
-    max-width: 60px;      /* Не даем стать слишком широким */
-    fill: var(--app-hint-color);
-    transition: all 0.2s ease-in-out;
-    margin-top: 4px;      /* Отступ от кружочка радио-кнопки */
-}
-
-/* Меняем цвет иконки, когда родитель (label) активен */
-.shipping-option-label.active .shipping-icon {
-    fill: var(--app-button-color);
-}
-
-.shipping-options input[type="radio"] {
-    display: none;
-}
-
-/* Стили для футера формы */
-.form-footer {
-    margin-top: 24px;
-    padding-top: 16px;
-    border-top: 1px solid var(--app-separator-color);
-}
-
-.order-summary {
-    width: 100%;
-    margin-bottom: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.summary-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 16px;
-    color: var(--app-text-color);
-}
-.summary-row.final-total {
-    font-size: 20px;
-    font-weight: 600;
-    padding-top: 12px;
-    margin-top: 4px;
-}
-
-.agreement-checkbox-container {
-    margin-bottom: 16px;
-    padding: 10px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-}
-.agreement-checkbox-container input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-top: 2px;
-    flex-shrink: 0;
-}
-.agreement-checkbox-container label {
-    font-size: 14px;
-    color: var(--app-hint-color);
-    line-height: 1.5;
-}
-.agreement-checkbox-container a {
-    color: var(--app-link-color);
-    text-decoration: none;
-}
-
-.checkout-btn {
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    background-color: var(--app-button-color);
-    color: var(--app-button-text-color);
-}
-.checkout-btn:disabled {
-    background-color: var(--app-secondary-bg-color);
-    color: var(--app-hint-color);
-    cursor: not-allowed;
+/* Mobile Sticky specific */
+@media (max-width: 1023px) {
+    .checkout-form {
+        padding-bottom: 20px;
+    }
 }

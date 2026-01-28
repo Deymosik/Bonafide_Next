@@ -127,7 +127,12 @@ class ProductListSerializer(serializers.ModelSerializer):
     # ИЗМЕНЕНИЕ 1: 'price' теперь всегда актуальная цена (обычная или акционная)
     # Мы используем свойство current_price, которое создали в модели
     price = serializers.DecimalField(max_digits=10, decimal_places=2, source='current_price', read_only=True)
-
+    
+    # --- STOCK FIELDS ---
+    availability_status = serializers.CharField(read_only=True)
+    availability_status_display = serializers.CharField(source='get_availability_status_display', read_only=True)
+    stock_quantity = serializers.IntegerField(read_only=True)
+    
     class Meta:
         model = Product
         fields = (
@@ -139,7 +144,10 @@ class ProductListSerializer(serializers.ModelSerializer):
             'regular_price', # Обычная цена
             'deal_price', # Акционная цена (если есть)
             'main_image_thumbnail_url',
-            'info_panels'
+            'info_panels',
+            'availability_status',
+            'availability_status_display',
+            'stock_quantity'
         )
 
     def get_main_image_thumbnail_url(self, obj):
@@ -177,6 +185,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     # ИЗМЕНЕНИЕ 2: 'price' также становится актуальной ценой
     price = serializers.DecimalField(max_digits=10, decimal_places=2, source='current_price', read_only=True)
 
+    # --- STOCK FIELDS ---
+    availability_status = serializers.CharField(read_only=True)
+    availability_status_display = serializers.CharField(source='get_availability_status_display', read_only=True)
+    # stock_quantity уже есть в модели, но мы может захотим его скрыть? Пока отдаем.
+    
+    can_be_purchased = serializers.BooleanField(read_only=True) # Используем property из модели
+
     class Meta:
         model = Product
         fields = (
@@ -188,7 +203,15 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'images', 'audio_sample', 'info_panels', 'info_cards', 'related_products',
              'color_variations', 'features',
             'grouped_characteristics',
-            'related_products', 'color_variations'
+            'related_products', 'color_variations',
+            # New Stock Fields
+            'availability_status',
+            'availability_status_display',
+            'stock_quantity',
+            'allow_backorder',
+            'restock_date',
+            'low_stock_threshold',
+            'can_be_purchased',
         )
 
     def get_grouped_characteristics(self, obj):
@@ -234,8 +257,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 # Сериализатор для глобальных настроек
 class ShopSettingsSerializer(serializers.ModelSerializer):
     images = ShopImageSerializer(many=True, read_only=True)
-    search_lottie_url = serializers.SerializerMethodField()
+
     cart_lottie_url = serializers.SerializerMethodField()
+    order_success_lottie_url = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
     og_default_image_url = serializers.SerializerMethodField()
 
@@ -244,7 +268,7 @@ class ShopSettingsSerializer(serializers.ModelSerializer):
         fields = (
             'manager_username', 'telegram_channel_url', 'about_us_section',
             'delivery_section', 'warranty_section', 'images', 'free_shipping_threshold',
-            'search_placeholder', 'search_initial_text', 'search_lottie_url', 'cart_lottie_url', 'article_font_family',
+            'search_placeholder', 'cart_lottie_url', 'order_success_lottie_url', 'article_font_family',
             'public_offer', 'privacy_policy', 'site_name', 'logo_url', 'og_default_image_url',
             'seo_title_home', 'seo_description_home',
             'seo_title_blog', 'seo_description_blog', 'seo_title_product', 'seo_description_product',
@@ -252,10 +276,18 @@ class ShopSettingsSerializer(serializers.ModelSerializer):
             'seo_title_checkout', 'seo_description_checkout',
         )
 
-    def get_search_lottie_url(self, obj):
+
+
+    def get_cart_lottie_url(self, obj):
         request = self.context.get('request')
-        if obj.search_lottie_file and hasattr(obj.search_lottie_file, 'url'):
-            return request.build_absolute_uri(obj.search_lottie_file.url)
+        if obj.cart_lottie_file and hasattr(obj.cart_lottie_file, 'url'):
+            return request.build_absolute_uri(obj.cart_lottie_file.url)
+        return None
+
+    def get_order_success_lottie_url(self, obj):
+        request = self.context.get('request')
+        if obj.order_success_lottie_file and hasattr(obj.order_success_lottie_file, 'url'):
+            return request.build_absolute_uri(obj.order_success_lottie_file.url)
         return None
 
     def get_cart_lottie_url(self, obj):
@@ -293,6 +325,7 @@ class DealOfTheDaySerializer(serializers.ModelSerializer):
         model = Product
         fields = (
             'id',
+            'slug',
             'name',
             'price', # <- Теперь это regular_price
             'deal_price',
@@ -475,3 +508,31 @@ class ArticleDetailSerializer(ImageUrlBuilderSerializer):
             return self._get_absolute_url(obj.og_image)
         # Если нет, возвращаем None (фронтенд будет использовать fallback)
         return None
+
+# --- 5. Сериализаторы для просмотра заказа (Secure) ---
+
+class OrderItemDetailSerializer(serializers.ModelSerializer):
+    """Сериализатор товара в уже созданном заказе (для просмотра)."""
+    # Используем ProductListSerializer для отображения миниатюры и названия
+    product = ProductListSerializer(read_only=True)
+    
+    class Meta:
+        model = OrderItem
+        fields = ('id', 'product', 'quantity', 'price_at_purchase')
+
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор деталей заказа для страницы успеха.
+    Возвращает безопасный набор полей.
+    """
+    items = OrderItemDetailSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Order
+        fields = (
+            'id', 'status', 'created_at', 
+            'subtotal', 'discount_amount', 'final_total', 
+            'delivery_method', 'city', 'street', 'cdek_office_address',
+            'items'
+        )

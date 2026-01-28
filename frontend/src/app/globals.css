@@ -1,101 +1,49 @@
 /* /src/app/globals.css */
 
 /* ========================================= */
-/*      1. ПЕРЕМЕННЫЕ И ТЕМА                 */
+/*      1. CSS RESET & BASICS                */
 /* ========================================= */
-:root {
-  /* --- Общие константы (брендинг) --- */
-  --primary-accent: #c99e10;
-  --primary-accent-contrast: #ffffff;
-  --destructive-action: #ff3b30;
-  --positive-action: #34c759;
-  --link-color: #007aff;
 
-  /* --- Безопасные зоны --- */
-  --safe-area-inset-top: env(safe-area-inset-top, 0px);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-
-  /* --- Desktop Config --- */
-  --desktop-max-width: 900px;
-  /* Ограничиваем ширину контента */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-/*
-   СВЕТЛАЯ ТЕМА
-*/
-[data-theme='light'] {
-  --app-bg-color: var(--tg-theme-bg-color, #ffffff);
-  --app-secondary-bg-color: var(--tg-theme-secondary-bg-color, #f2f2f7);
-  --app-text-color: var(--tg-theme-text-color, #000000);
-  --app-hint-color: var(--tg-theme-hint-color, #8e8e93);
-  --app-separator-color: #e5e5ea;
-
-  --app-link-color: var(--tg-theme-link-color, #007aff);
-  --app-button-color: var(--tg-theme-button-color, #000000);
-  --app-button-text-color: var(--tg-theme-button-text-color, #ffffff);
-  --app-destructive-text-color: var(--tg-theme-destructive-text-color, #ff3b30);
-
-  --checkbox-border-color: #c7c7cc;
+* {
+  margin: 0;
+  padding: 0;
 }
-
-/*
-   ТЕМНАЯ ТЕМА
-*/
-[data-theme='dark'] {
-  --app-bg-color: #121212;
-  --app-secondary-bg-color: #1c1c1e;
-  --app-text-color: #e0e0e0;
-  --app-hint-color: #98989e;
-  --app-separator-color: #38383a;
-
-  --app-link-color: #0a84ff;
-  --app-button-color: #c99e10;
-  --app-button-text-color: #000000;
-  --app-destructive-text-color: #ff453a;
-
-  --checkbox-border-color: #636366;
-
-  --tg-theme-bg-color: #121212;
-  --tg-theme-secondary-bg-color: #1c1c1e;
-  --tg-theme-text-color: #e0e0e0;
-}
-
-/* ========================================= */
-/*      2. ГЛОБАЛЬНЫЕ СБРОСЫ И БАЗА          */
-/* ========================================= */
 
 html {
-  height: 100%;
   -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  tab-size: 4;
 }
 
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  min-height: 100vh;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  background-color: var(--app-bg-color);
-  color: var(--app-text-color);
-
-  min-height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
   touch-action: manipulation;
-  padding-top: 0;
-
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* --- DESKTOP TWEAKS --- */
-/* На больших экранах делаем фон body отличным от фона контента, чтобы выделить "приложение" */
-@media (min-width: 1024px) {
-  body {
-    background-color: var(--app-secondary-bg-color);
-    /* Серый фон вокруг */
-  }
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  outline: none;
 }
 
 a {
@@ -103,23 +51,181 @@ a {
   color: inherit;
 }
 
-.sticky-top-safe {
-  position: -webkit-sticky;
-  position: sticky;
-  top: 0;
-  top: var(--safe-area-inset-top);
-  z-index: 100;
-  background-color: var(--app-bg-color);
-  transition: background-color 0.3s ease;
+/* ========================================= */
+/*      2. DESIGN TOKENS (:root)             */
+/* ========================================= */
 
-  /* Фикс для десктопа: чтобы sticky элементы не вылезали за ширину контейнера */
-  max-width: var(--desktop-max-width);
-  margin: 0 auto;
-  /* Если родитель position:static, это поможет */
+:root {
+  /* --- 2.1 TELEGRAM & COLOR PALETTE --- */
+
+  /* 
+     Telegram Variables (Fallback to Light Theme)
+     Мы используем их как "Source of Truth".
+     Если сайт открыт в Telegram WebApp, эти переменные будут переопределены платформой.
+     Если в браузере - сработают наши фоллбеки (светлая тема).
+  */
+
+  /* Backgrounds */
+  --tg-theme-bg-color: #ffffff;
+  --tg-theme-secondary-bg-color: #f2f2f7;
+  /* iOS Light Gray */
+
+  /* Text */
+  --tg-theme-text-color: #000000;
+  --tg-theme-hint-color: #8e8e93;
+  /* Secondary text */
+  --tg-theme-link-color: #007aff;
+  /* Apple Blue */
+
+  /* Actions */
+  --tg-theme-button-color: #c99e10;
+  /* BonaFide Gold Default */
+  --tg-theme-button-text-color: #ffffff;
+
+  /* Status */
+  --tg-theme-destructive-text-color: #ff3b30;
+  /* iOS Red */
+
+  /* --- 2.2 SEMANTIC TOKENS (Design System) --- */
+
+  /* Colors: Background */
+  --color-bg-base: var(--tg-theme-bg-color);
+  --color-bg-secondary: var(--tg-theme-secondary-bg-color);
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Colors: Text */
+  --color-text-primary: var(--tg-theme-text-color);
+  --color-text-secondary: var(--tg-theme-hint-color);
+  --color-text-brand: #c99e10;
+  /* Fixed Brand Color */
+  --color-text-inverse: #ffffff;
+
+  /* Colors: Actions (Primary) */
+  --color-primary-main: var(--tg-theme-button-color);
+  --color-primary-contrast: var(--tg-theme-button-text-color);
+
+  /* Colors: Status */
+  --color-error: var(--tg-theme-destructive-text-color, #ff3b30);
+  --color-success: #34c759;
+  --color-warning: #ffcc00;
+
+  /* Colors: UI Elements */
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-separator: rgba(0, 0, 0, 0.1);
+
+  /* Typography (Base sizes) */
+  --font-family-base: inherit;
+  /* Inherit from body (set by Next.js Inter) */
+  --font-family-article: 'Exo 2', sans-serif;
+
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.875rem;
+  /* 14px */
+  --text-base: 1rem;
+  /* 16px */
+  --text-lg: 1.125rem;
+  /* 18px */
+  --text-xl: 1.25rem;
+  /* 20px */
+  --text-2xl: 1.5rem;
+  /* 24px */
+
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  /* 4px */
+  --space-2: 0.5rem;
+  /* 8px */
+  --space-3: 0.75rem;
+  /* 12px */
+  --space-4: 1rem;
+  /* 16px */
+  --space-5: 1.25rem;
+  /* 20px */
+  --space-6: 1.5rem;
+  /* 24px */
+  --space-8: 2rem;
+  /* 32px */
+  --space-10: 2.5rem;
+  /* 40px */
+  --space-12: 3rem;
+  /* 48px */
+  --space-16: 4rem;
+  /* 64px */
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  /* 4px */
+  --radius-md: 0.5rem;
+  /* 8px */
+  --radius-lg: 0.75rem;
+  /* 12px */
+  --radius-xl: 1rem;
+  /* 16px */
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-floating: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+
+  /* Layout */
+  --desktop-max-width: 900px;
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* --- 2.3 LEGACY COMPATIBILITY (BACKWARDS SUPPORT) --- */
+  /* Mapping old variables to new system to prevent breaking changes */
+
+  --primary-accent: var(--color-primary-main);
+  --primary-accent-contrast: var(--color-primary-contrast);
+  --destructive-action: var(--color-error);
+  --positive-action: var(--color-success);
+  --link-color: var(--tg-theme-link-color);
+
+  --app-bg-color: var(--color-bg-base);
+  --app-secondary-bg-color: var(--color-bg-secondary);
+  --app-text-color: var(--color-text-primary);
+  --app-hint-color: var(--color-text-secondary);
+  --app-separator-color: var(--color-separator);
+  --app-link-color: var(--tg-theme-link-color);
+  --app-button-color: var(--color-primary-main);
+  --app-button-text-color: var(--color-primary-contrast);
+  --app-destructive-text-color: var(--color-error);
+
+  /* Legacy checkbox fix */
+  --checkbox-border-color: #c7c7cc;
 }
 
 /* ========================================= */
-/*      3. СТРУКТУРА ЛЕЙАУТА                 */
+/*      3. GLOBAL STYLES                     */
+/* ========================================= */
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  /* Шрифты наследуются от Next.js Inter классы */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* --- Desktop Background Tweak --- */
+@media (min-width: 1024px) {
+  body {
+    /* На десктопе вокруг контейнера делаем серый фон, если мы не в Telegram (там свои правила) 
+       Но так как мы привязаны к --tg-theme-secondary-bg-color, который по дефолту серый,
+       он будет работать корректно.
+    */
+    background-color: var(--color-bg-secondary);
+  }
+}
+
+/* ========================================= */
+/*      4. LAYOUT UTILITIES                  */
 /* ========================================= */
 
 .app-layout-container {
@@ -127,16 +233,15 @@ a {
   flex-direction: column;
   min-height: 100vh;
   position: relative;
-
-  /* --- DESKTOP LAYOUT --- */
   width: 100%;
   max-width: var(--desktop-max-width);
   margin: 0 auto;
-  /* Центрируем приложение */
-  background-color: var(--app-bg-color);
-  /* Возвращаем белый/черный фон контенту */
+
+  /* Контейнер приложения всегда использует базовый фон (белый по умолчанию) */
+  background-color: var(--color-bg-base);
+
+  /* Легкая тень на десктопе */
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.05);
-  /* Легкая тень по краям */
 }
 
 .layout-content {
@@ -144,11 +249,39 @@ a {
   padding-bottom: var(--safe-area-inset-bottom);
 }
 
+/* Учет нижнего таб-бара */
 .app-layout-container:has(nav) .layout-content,
 .layout-content.with-tab-bar {
   padding-bottom: calc(60px + var(--safe-area-inset-bottom));
 }
 
+.sticky-top-safe {
+  position: sticky;
+  top: var(--safe-area-inset-top);
+  z-index: 100;
+  background-color: var(--color-bg-base);
+  transition: background-color 0.2s ease;
+  max-width: var(--desktop-max-width);
+  margin: 0 auto;
+}
+
+/* ========================================= */
+/*      5. UTILITIES                         */
+/* ========================================= */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -159,6 +292,6 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--app-secondary-bg-color);
-  border-radius: 3px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-full);
 }

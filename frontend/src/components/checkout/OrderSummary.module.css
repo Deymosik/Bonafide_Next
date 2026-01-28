@@ -1,0 +1,106 @@
+/* src/components/OrderSummary.module.css */
+
+.summary-card {
+    background-color: var(--app-bg-color);
+    /* For stickiness to work, container needs height or relative */
+    /* Sticky footer default mobile style */
+    position: fixed;
+    bottom: calc(50px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    padding: 16px;
+    border-top: 1px solid var(--app-secondary-bg-color);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    z-index: 99;
+}
+
+.upsell-hint {
+    background-color: var(--app-secondary-bg-color);
+    color: var(--app-link-color);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.order-summary-content {
+    width: 100%;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    color: var(--app-text-color);
+}
+
+.summary-row.discount span {
+    color: var(--positive-action);
+}
+
+.summary-row.final-total {
+    font-size: 20px;
+    font-weight: 600;
+    border-top: 1px solid var(--app-secondary-bg-color);
+    padding-top: 12px;
+    margin-top: 4px;
+}
+
+.checkout-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+    transition: opacity 0.2s ease, transform 0.1s;
+}
+
+.checkout-btn:active {
+    transform: scale(0.98);
+}
+
+.checkout-btn:disabled {
+    background-color: var(--app-secondary-bg-color);
+    color: var(--app-hint-color);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* DESKTOP LAYOUT */
+@media (min-width: 1024px) {
+    .summary-card {
+        position: sticky;
+        top: 110px;
+        /* Sticky from top (accounting for header) */
+        bottom: auto;
+        border: none;
+        border-radius: 24px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        /* Floaty card */
+        background-color: var(--app-secondary-bg-color);
+        /* Contrast from main bg */
+        padding: 24px;
+        z-index: 10;
+        min-width: 0;
+        /* Allow shrinking to fit grid column */
+        width: 100%;
+        box-sizing: border-box;
+        /* Critical for padding calculation */
+    }
+
+    .checkout-btn {
+        padding: 16px;
+        font-size: 18px;
+    }
+}

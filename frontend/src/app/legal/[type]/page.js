@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 import React from 'react';
 import { notFound } from 'next/navigation';
-import LegalPageClient from '@/components/LegalPageClient';
+import LegalPageClient from '@/components/pages/LegalPageClient';
 import { getShopSettings, replaceSeoVariables } from '@/lib/serverUtils';
 
 // Вспомогательная функция для получения данных
@@ -35,7 +35,7 @@ export async function generateMetadata(props) {
 
     if (!data) return { title: 'Документ не найден' };
 
-    const seoVars = { site_name: data.settings?.site_name || 'BonaFide55' };
+    const seoVars = { site_name: data.settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop' };
     // Используем шаблон или просто название документа
     const title = `${data.title} | ${seoVars.site_name}`;
 

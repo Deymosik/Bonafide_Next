@@ -43,6 +43,18 @@ def format_order_message(order):
             address_parts.append(f"(индекс: {order.postcode})")
         address = f"📍 {', '.join(address_parts)}"
 
+    # Определяем статус бесплатной доставки
+    delivery_status_suffix = ""
+    settings_obj = get_shop_settings()
+    if settings_obj and settings_obj.free_shipping_threshold:
+        threshold = settings_obj.free_shipping_threshold
+        # Если порог > 0, проверяем сумму
+        if threshold > 0:
+            if order.final_total >= threshold:
+                delivery_status_suffix = " (Бесплатно)"
+            else:
+                delivery_status_suffix = " (Платная)"
+
     # Формируем текст скидки
     discount_text = ""
     if order.discount_amount and order.discount_amount > 0:
@@ -59,15 +71,16 @@ def format_order_message(order):
     # Ссылка на заказ в админке
     admin_url = ""
     site_url = getattr(settings, 'SITE_URL', '')
+    admin_path = getattr(settings, 'ADMIN_URL', 'admin/')
     if site_url:
-        admin_url = f"\n\n🔗 <a href=\"{site_url}/admin/shop/order/{order.id}/change/\">Открыть в админке</a>"
+        admin_url = f"\n\n🔗 <a href=\"{site_url}/{admin_path}shop/order/{order.id}/change/\">Открыть в админке</a>"
 
     message = f"""🛒 <b>НОВЫЙ ЗАКАЗ #{order.id}</b>
 
 👤 <b>Клиент:</b> {order.get_full_name()}
 📱 <b>Телефон:</b> {order.phone}{client_tg}
 
-📦 <b>Доставка:</b> {order.delivery_method}
+📦 <b>Доставка:</b> {order.delivery_method}{delivery_status_suffix}
 {address}
 
 ━━━━━━━━━━━━━━━━━━━━

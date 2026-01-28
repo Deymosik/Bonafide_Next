@@ -18,13 +18,20 @@ const getSessionId = () => {
 const getBaseUrl = () => {
     // 1. Если код выполняется НА СЕРВЕРЕ (SSR внутри Docker)
     if (typeof window === 'undefined') {
-        // Обращаемся к контейнеру по его имени в сети Docker
-        return 'http://backend:8000/api';
+        // Используем переменную окружения (которую мы прокинули в docker-compose)
+        // Приоритет: DOCKER_INTERNAL_URL (чтобы обойти .env.local) -> DJANGO_API_URL -> фолбэк
+        const serverUrl = process.env.DOCKER_INTERNAL_URL || process.env.DJANGO_API_URL || 'http://backend:8000';
+        return `${serverUrl}/api`;
     }
 
     // 2. Если код выполняется В БРАУЗЕРЕ (Client Side)
     // Используем относительный путь. Nginx сам перенаправит /api на бэкенд.
-    return process.env.NEXT_PUBLIC_API_URL || '/api';
+    const clientUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    // Если URL задан (например http://localhost:8000), добавляем /api, если его там нет
+    if (clientUrl && !clientUrl.endsWith('/api')) {
+        return `${clientUrl}/api`;
+    }
+    return clientUrl || '/api';
 };
 
 const api = axios.create({
@@ -41,12 +48,16 @@ api.interceptors.request.use((config) => {
         if (window.Telegram?.WebApp?.initData) {
             config.headers.Authorization = `tma ${window.Telegram.WebApp.initData}`;
         }
+    } else {
+        // НА СЕРВЕРЕ (SSR)
+        // Подменяем Host, чтобы Django возвращал правильные URL картинок (localhost:8000)
+        config.headers['Host'] = 'localhost:8000';
+    }
 
-        // 2. Добавляем Session ID (для обычных браузеров или как фолбэк)
-        const sessionId = getSessionId();
-        if (sessionId) {
-            config.headers['X-Session-ID'] = sessionId;
-        }
+    // 2. Добавляем Session ID (для обычных браузеров или как фолбэк)
+    const sessionId = getSessionId();
+    if (sessionId) {
+        config.headers['X-Session-ID'] = sessionId;
     }
     return config;
 });

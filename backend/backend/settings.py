@@ -33,8 +33,14 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 
 # Разрешенные хосты. Читаются из .env файла.
 # Пример для .env: ALLOWED_HOSTS_STR=bf55.ru,www.bf55.ru
-allowed_hosts_str = os.environ.get('ALLOWED_HOSTS_STR', '127.0.0.1,localhost')
-ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')]
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
+    allowed_hosts_str = os.environ.get('ALLOWED_HOSTS_STR', '127.0.0.1,localhost')
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')]
+
+# Базовый URL сайта (для формирования ссылок в уведомлениях)
+SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
 
 # --- Настройки безопасности для Production ---
 # Эти настройки включаются только когда DEBUG=False
@@ -64,8 +70,13 @@ if not DEBUG:
 # --- Приложения Django ---
 
 INSTALLED_APPS = [
-    # --- ADMIN UI (Standard) ---
-    # "unfold" removed
+    # --- ADMIN UI (Unfold) ---
+    "unfold",
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
+    "unfold.contrib.import_export",
+    "unfold.contrib.guardian",
+    "unfold.contrib.simple_history",
     # -------------------------
     'django.contrib.admin',
     'django.contrib.auth',
@@ -97,7 +108,8 @@ MIDDLEWARE = [
     # WhiteNoise для эффективной раздачи статики
    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    # 'admin_reorder.middleware.ModelAdminReorder', # Removed for Unfold
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -330,6 +342,158 @@ LOGGING = {
     },
 }
 
-# --- Настройки django-unfold (Админка) ---
-# --- Настройки django-unfold (Админка) ---
-# UNFOLD settings removed to restore standard admin interface
+# --- Celery Configuration ---
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+from django.utils.translation import gettext_lazy as _
+
+UNFOLD = {
+    "SITE_TITLE": os.environ.get("ADMIN_SITE_TITLE", "BonaFide55 Admin"),
+    "SITE_HEADER": os.environ.get("ADMIN_SITE_HEADER", "BonaFide55"),
+    "SITE_URL": "/",
+    "SITE_ICON": {
+        "light": lambda request: static("admin/img/logo-light.svg"),  # light mode
+        "dark": lambda request: static("admin/img/logo-dark.svg"),  # dark mode
+    },
+    # "THEME": "dark",  # Force dark mode or "light"
+    "STYLES": [
+        lambda request: static("css/unfold_custom.css"),
+    ],
+    "SCRIPTS": [
+        lambda request: static("js/unfold_custom.js"),
+    ],
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": False,
+        "navigation": [
+            {
+                "title": _("Каталог"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Товары"),
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:shop_product_changelist"),
+                    },
+                    {
+                        "title": _("Категории"),
+                        "icon": "category",
+                        "link": reverse_lazy("admin:shop_category_changelist"),
+                    },
+                    {
+                        "title": _("Группы цветов"),
+                        "icon": "palette",
+                        "link": reverse_lazy("admin:shop_colorgroup_changelist"),
+                    },
+                    {
+                        "title": _("Характеристики"),
+                        "icon": "list",
+                        "link": reverse_lazy("admin:shop_characteristic_changelist"),
+                    },
+                    {
+                        "title": _("Категории характеристик"),
+                        "icon": "folder_open",
+                        "link": reverse_lazy("admin:shop_characteristiccategory_changelist"),
+                    },
+                    {
+                        "title": _("Фичи (Особенности)"),
+                        "icon": "verified",
+                        "link": reverse_lazy("admin:shop_feature_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Продажи"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Заказы"),
+                        "icon": "shopping_cart",
+                        "link": reverse_lazy("admin:shop_order_changelist"),
+                        "badge": "shop.admin_utils.order_badge_callback",
+                    },
+                    {
+                        "title": _("Корзины"),
+                        "icon": "shopping_basket",
+                        "link": reverse_lazy("admin:shop_cart_changelist"),
+                    },
+                    {
+                        "title": _("Правила скидок"),
+                        "icon": "local_offer",
+                        "link": reverse_lazy("admin:shop_discountrule_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Контент"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Статьи"),
+                        "icon": "article",
+                        "link": reverse_lazy("admin:shop_article_changelist"),
+                    },
+                    {
+                        "title": _("Категории статей"),
+                        "icon": "library_books",
+                        "link": reverse_lazy("admin:shop_articlecategory_changelist"),
+                    },
+                    {
+                        "title": _("Промо баннеры"),
+                        "icon": "image",
+                        "link": reverse_lazy("admin:shop_promobanner_changelist"),
+                    },
+                    {
+                        "title": _("FAQ"),
+                        "icon": "help",
+                        "link": reverse_lazy("admin:shop_faqitem_changelist"),
+                    },
+                    {
+                        "title": _("Инфо панели"),
+                        "icon": "info",
+                        "link": reverse_lazy("admin:shop_infopanel_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Система"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Настройки магазина"),
+                        "icon": "settings",
+                        "link": reverse_lazy("admin:shop_shopsettings_changelist"),
+                    },
+                    {
+                        "title": _("Резервные копии"),
+                        "icon": "backup",
+                        "link": reverse_lazy("admin:shop_backup_changelist"),
+                    },
+                    {
+                        "title": _("Пользователи"),
+                        "icon": "person",
+                        "link": reverse_lazy("admin:auth_user_changelist"),
+                    },
+                    {
+                        "title": _("Группы"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
+                    },
+                ],
+            },
+        ],
+    },
+}
+# --- Next.js Revalidation ---
+NEXTJS_REVALIDATE_URL = os.environ.get("NEXTJS_REVALIDATE_URL", "http://frontend:3000/api/revalidate")
+REVALIDATION_TOKEN = os.environ.get("REVALIDATION_TOKEN", "my-secret-token-123")
+

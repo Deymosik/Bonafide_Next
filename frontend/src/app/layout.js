@@ -9,7 +9,7 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { ToastProvider } from "@/providers/ToastProvider";
-import TabBar from "@/components/TabBar";
+import TabBar from "@/components/layout/TabBar";
 
 const inter = Inter({
     subsets: ["latin", "cyrillic"],
@@ -63,7 +63,7 @@ export default function RootLayout({ children }) {
                     defaultTheme="system": берет настройку ОС
                     enableSystem: включает авто-определение
                 */}
-                <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
+                <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem={false}>
                     <SettingsProvider>
                         <NotificationProvider>
                             <ToastProvider />

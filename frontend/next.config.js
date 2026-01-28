@@ -5,9 +5,11 @@ const nextConfig = {
     // Читаем URL бэкенда из переменных окружения, или фолбэк на локалхост
     env: {
         DJANGO_API_URL: process.env.DJANGO_API_URL || 'http://127.0.0.1:8000',
+        DOCKER_INTERNAL_URL: process.env.DOCKER_INTERNAL_URL, // Прокидываем переменную из Docker
     },
 
     images: {
+        unoptimized: process.env.IMAGE_UNOPTIMIZED === 'true', // Отключаем оптимизацию локально если задана переменная
         remotePatterns: [
             {
                 protocol: 'https',

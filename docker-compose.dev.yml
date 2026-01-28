@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # --- База данных ---
+  db:
+    image: postgres:15-alpine
+    container_name: bonafide_local_db
+    environment:
+      - POSTGRES_DB=bonafide_db
+      - POSTGRES_USER=bonafide_user
+      - POSTGRES_PASSWORD=bonafide_password
+    ports:
+      - "5432:5432" # Пробрасываем порт наружу для GUI
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U bonafide_user -d bonafide_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - bonafide_dev_net
+
+  # --- Redis ---
+  redis:
+    image: redis:alpine
+    container_name: bonafide_local_redis
+    ports:
+      - "6379:6379" # Пробрасываем порт наружу
+    restart: unless-stopped
+    networks:
+      - bonafide_dev_net
+
+  # --- Backend (Django) ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bonafide_local_backend
+    # Переопределяем команду для локальной разработки с hot-reload
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      # Монтируем код внутрь контейнера для автообновления
+      - ./backend:/app
+      - staticfiles_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      # Явно задаем переменные для локальной Docker-среды
+      - DJANGO_DEBUG=True
+      - ALLOWED_HOSTS_STR=127.0.0.1,localhost,backend
+      - POSTGRES_DB=bonafide_db
+      - POSTGRES_USER=bonafide_user
+      - POSTGRES_PASSWORD=bonafide_password
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      # Важно: для Celery внутри сети Docker
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      # База данных
+      - DATABASE_URL=postgres://bonafide_user:bonafide_password@db:5432/bonafide_db
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - bonafide_dev_net
+
+  # --- Celery Worker ---
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bonafide_local_celery
+    command: celery -A backend worker -l info
+    volumes:
+      # Монтируем код, чтобы правки задач подхватывались (требует перезапуска воркера)
+      - ./backend:/app
+      - staticfiles_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - POSTGRES_DB=bonafide_db
+      - POSTGRES_USER=bonafide_user
+      - POSTGRES_PASSWORD=bonafide_password
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DATABASE_URL=postgres://bonafide_user:bonafide_password@db:5432/bonafide_db
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - bonafide_dev_net
+
+  # --- Frontend (Next.js) ---
+  frontend:
+    image: node:20-alpine
+    container_name: bonafide_local_frontend
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    command: npm run dev
+    volumes:
+      # Монтируем исходный код
+      - ./frontend:/app
+      # Изолируем node_modules контейнера от хоста (важно для macOS!)
+      - /app/node_modules
+      # Изолируем кэш сборки Next.js (CRITICAL для скорости на Mac!)
+      - /app/.next
+    environment:
+      # Указываем Next.js ходить на backend по имени сервиса (для серверных запросов)
+      - DJANGO_API_URL=http://backend:8000
+      # Специальная переменная, чтобы перебить локальные конфиги
+      - DOCKER_INTERNAL_URL=http://backend:8000
+      # Для клиентских запросов (из браузера) - localhost
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - bonafide_dev_net
+
+volumes:
+  postgres_local_data:
+  staticfiles_volume:
+  media_volume:
+
+
+networks:
+  bonafide_dev_net:
+    driver: bridge

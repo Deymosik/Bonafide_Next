@@ -1,7 +1,7 @@
 // src/app/page.js
 export const dynamic = 'force-dynamic';
 import React from 'react';
-import HomePageClient from '@/components/HomePageClient';
+import HomePageClient from '@/components/pages/HomePageClient';
 // Импортируем наши новые серверные утилиты
 import { fetchServerData, getShopSettings, replaceSeoVariables } from '@/lib/serverUtils';
 
@@ -11,11 +11,24 @@ import { fetchServerData, getShopSettings, replaceSeoVariables } from '@/lib/ser
  */
 export async function generateMetadata() {
     const settings = await getShopSettings();
-    const seoVars = { site_name: settings?.site_name || 'BonaFide55' };
-
     // Подставляем переменные в шаблоны (например, {{site_name}})
-    const title = replaceSeoVariables(settings?.seo_title_home, seoVars) || 'Главная';
-    const description = replaceSeoVariables(settings?.seo_description_home, seoVars) || 'Лучшие товары и аксессуары.';
+    // Приоритет: Админка -> ENV -> Хардкод
+    const defaultSiteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Shop';
+    const seoVars = { site_name: settings?.site_name || defaultSiteName };
+
+    const replaceVars = (text) => {
+        if (!text) return '';
+        let result = text;
+        Object.entries(seoVars).forEach(([key, value]) => {
+            result = result.replaceAll(`{{${key}}}`, value || '');
+        });
+        return result;
+    };
+
+    const title = replaceVars(settings?.seo_title_home || '{{site_name}}');
+    const description = replaceVars(settings?.seo_description_home || 'Лучшие товары в {{site_name}}');
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+    const siteName = settings?.site_name || defaultSiteName;
 
     return {
         title: title,

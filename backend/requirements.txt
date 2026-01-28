@@ -10,6 +10,7 @@ django-imagekit==5.0.0
 django-cleanup
 drf-spectacular
 django-unfold
+# force rebuild
 Pillow==11.3.0
 pillow-heif
 whitenoise==6.9.0
@@ -17,3 +18,5 @@ python-dotenv==1.1.1
 django-colorfield==0.9.0
 pytils
 requests==2.32.3
+celery
+redis

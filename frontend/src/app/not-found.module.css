@@ -1,0 +1,149 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    text-align: center;
+    padding: 24px;
+    background-color: var(--app-bg-color);
+    color: var(--app-text-color);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 
+   THE "GLOW" IS BACK - BUT REFINED.
+   Based on the primary accent color.
+*/
+.errorCode {
+    font-size: 8rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--primary-accent);
+    text-shadow: 0 0 40px rgba(201, 158, 16, 0.25);
+    margin: 0;
+    position: relative;
+    letter-spacing: -4px;
+
+    /* Subtle float animation */
+    animation: float 6s ease-in-out infinite;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 16px;
+    margin-bottom: 12px;
+}
+
+.description {
+    font-size: 1.1rem;
+    color: var(--app-hint-color);
+    max-width: 380px;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+/* Actions Container */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 320px;
+    /* Match typical card width */
+}
+
+/* 
+   PRIMARY BUTTON - Exact match to ProductPage "Add to Cart" 
+*/
+/* 
+   PRIMARY BUTTON 
+*/
+.buttonPrimary {
+    width: 100%;
+    box-sizing: border-box;
+    /* Ensure padding doesn't add to width */
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    /* Changed to flex for centering */
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.2s ease;
+}
+
+.buttonPrimary:active {
+    transform: scale(0.98);
+}
+
+/* 
+   SECONDARY BUTTON 
+*/
+.buttonSecondary {
+    flex: 1;
+    /* CRITICAL: Force equal width sharing */
+    width: auto;
+    /* Allow flex to control width */
+    min-width: 0;
+    /* Allow shrinking if text is huge (prevents overflow) */
+    box-sizing: border-box;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    background-color: var(--app-secondary-bg-color);
+    color: var(--app-text-color);
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.buttonSecondary:active {
+    background-color: var(--app-separator-color);
+    transform: scale(0.98);
+}
+
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@media (min-width: 768px) {
+    .errorCode {
+        font-size: 14rem;
+    }
+
+    /* 
+     Keep the actions container compact on desktop too.
+     320px is enough for "Home" and "Catalog/Back".
+     If it's too wide, the single button looks empty.
+    */
+    .actions {
+        max-width: 320px;
+    }
+}

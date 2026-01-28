@@ -2,9 +2,8 @@
 import logging
 from django.conf import settings
 from django.utils import timezone
-from django.db.models import Prefetch, Q
-from django.db.models import F
-from django.db import transaction
+from django.db.models import Prefetch, Q, Case, When, F
+from django.db import transaction, models
 from django.utils.decorators import method_decorator # Добавлено
 from django.views.decorators.cache import cache_page # Добавлено
 from urllib.parse import parse_qsl  # Добавлено, так как используется в parse_init_data
@@ -28,7 +27,7 @@ from .serializers import (
     ProductListSerializer, ProductDetailSerializer, CategorySerializer,
     PromoBannerSerializer, ShopSettingsSerializer, FaqItemSerializer,
     DealOfTheDaySerializer, CartSerializer, DetailedCartItemSerializer, OrderCreateSerializer,
-    ArticleListSerializer, ArticleDetailSerializer, ArticleCategorySerializer
+    ArticleListSerializer, ArticleDetailSerializer, ArticleCategorySerializer, OrderDetailSerializer
 )
 from .utils import validate_init_data
 
@@ -77,7 +76,7 @@ class SessionAuthMixin(APIView):
             request.session_key = session_key
             return super().dispatch(request, *args, **kwargs)
 
-        # 3. Если ничего нет -> Ошибка (фронтенд обязан прислать хоть что-то)
+        # 3. Если ничего нет -> Ошибка
         return Response({"error": "No authentication provided (Telegram or Session ID)"}, status=status.HTTP_401_UNAUTHORIZED)
 
     def get_cart(self):
@@ -175,6 +174,17 @@ class ProductListView(generics.ListAPIView):
         # по которому OrderingFilter сможет работать.
         queryset_with_price = Product.annotate_with_price(base_queryset)
 
+        # 3.1 АННОТИРУЕМ ПРИОРИТЕТ НАЛИЧИЯ (Для сортировки)
+        # IN_STOCK, PRE_ORDER, ON_DEMAND -> 1 (Показывать первыми)
+        # OUT_OF_STOCK, DISCONTINUED -> 0 (Показывать последними)
+        queryset_with_price = queryset_with_price.annotate(
+            availability_priority=Case(
+                When(availability_status__in=[Product.AvailabilityStatus.IN_STOCK, Product.AvailabilityStatus.PRE_ORDER, Product.AvailabilityStatus.ON_DEMAND], then=1),
+                default=0,
+                output_field=models.IntegerField(),
+            )
+        )
+
         # --- Далее идет ВАША СУЩЕСТВУЮЩАЯ ЛОГИКА ФИЛЬТРАЦИИ, ---
         # --- но теперь она применяется к новому queryset_with_price. ---
 
@@ -237,7 +247,7 @@ class ProductListView(generics.ListAPIView):
                 # Ищем либо по вектору (полное совпадение слов), 
                 # либо по триграммам (совпадение > 10% для опечаток)
                 Q(rank__gte=0.01) | Q(similarity__gt=0.01) 
-            ).order_by('-rank', '-similarity', '-created_at') # Сначала самые релевантные
+            ).order_by('-rank', '-similarity', '-availability_priority', '-created_at') # Сначала самые релевантные, потом по наличию
             
             # --- DEBUG SQL & RESULTS ---
             # (Debug prints removed)
@@ -245,8 +255,15 @@ class ProductListView(generics.ListAPIView):
             
         else:
             # Если поиска нет, применяем стандартные фильтры DRF (сортировка и т.д.)
+            # Но сначала применим сортировку по наличию, если явно не задана другая
+            
             for backend in list(self.filter_backends):
                 queryset_with_price = backend().filter_queryset(self.request, queryset_with_price, self)
+            
+            # Если пользователь НЕ просил свою сортировку (ordering), то добавим нашу по умолчанию
+            # (DRF OrderingFilter применяет сортировку только если есть параметр ordering)
+            if not self.request.query_params.get('ordering'):
+                 queryset_with_price = queryset_with_price.order_by('-availability_priority', '-created_at')
 
         return queryset_with_price
 
@@ -596,10 +613,13 @@ class OrderCreateView(SessionAuthMixin):
 
                 # Шаг 3: Отправляем уведомление менеджеру в Telegram (асинхронно, не блокирует)
                 try:
-                    from .telegram_notifications import send_order_notification
-                    send_order_notification(order)
-                except Exception as tg_error:
-                    logger.error(f"Failed to send Telegram notification for order #{order.id}: {tg_error}")
+                    # Асинхронная отправка уведомления в Telegram (через Celery)
+                    from .tasks import send_order_notification_task
+                    # Используем on_commit, чтобы задача запускалась только после успешной фиксации транзакции
+                    transaction.on_commit(lambda: send_order_notification_task.delay(order.id))
+                except Exception as e:
+                    # Логируем ошибку, но не прерываем создание заказа
+                    logger.error(f"Failed to queue notification task for Order #{order.id}: {e}")
 
                 return Response({'success': True, 'order_id': order.id}, status=status.HTTP_201_CREATED)
 
@@ -612,6 +632,44 @@ class OrderCreateView(SessionAuthMixin):
         else:
             logger.warning(f"Order validation error: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrderDetailView(SessionAuthMixin, generics.RetrieveAPIView):
+    """
+    Возвращает детали заказа ТОЛЬКО если он принадлежит текущему пользователю.
+    Защита: Telegram ID или Session Key должны совпадать.
+    """
+    queryset = Order.objects.all()
+    serializer_class = OrderDetailSerializer
+    lookup_field = 'id'
+
+    def get_object(self):
+        # 1. Пытаемся получить заказ по ID
+        order_id = self.kwargs.get('id')
+        try:
+            order = Order.objects.prefetch_related('items__product').get(id=order_id)
+        except Order.DoesNotExist:
+             # Чтобы не брутфорсили ID, лучше возвращать 404
+            raise Http404("Order not found")
+
+        # 2. ПРОВЕРКА БЕЗОПАСНОСТИ
+        # a) Проверяем Telegram ID
+        if self.request.telegram_user:
+            if order.telegram_id != self.request.telegram_user['id']:
+                self.permission_denied(self.request, message="Access denied: Not your order")
+        
+        # b) Проверяем Session Key (для Web Guest)
+        elif self.request.session_key:
+            if order.session_key != self.request.session_key:
+                self.permission_denied(self.request, message="Access denied: Not your order")
+        
+        else:
+            # c) Если вообще не авторизован -> 403
+            self.permission_denied(self.request, message="Authentication required")
+
+        return order
+
+
 
 
 class ArticleListView(generics.ListAPIView):

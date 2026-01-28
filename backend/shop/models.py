@@ -1,5 +1,7 @@
 # backend/shop/models.py
+import os
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
 from django.utils import timezone
 from tinymce.models import HTMLField
 from django.db.models import Case, When, F, DecimalField
@@ -113,6 +115,13 @@ class ProductCharacteristic(models.Model):
 
 # --- Модель Product (С КЛЮЧЕВЫМИ ИЗМЕНЕНИЯМИ) ---
 class Product(models.Model):
+    class AvailabilityStatus(models.TextChoices):
+        IN_STOCK = 'IN_STOCK', 'В наличии'
+        OUT_OF_STOCK = 'OUT_OF_STOCK', 'Нет в наличии'
+        PRE_ORDER = 'PRE_ORDER', 'Предзаказ'
+        DISCONTINUED = 'DISCONTINUED', 'Снят с производства'
+        ON_DEMAND = 'ON_DEMAND', 'Под заказ'
+
     name = models.CharField("Название товара", max_length=200)
 
     slug = models.SlugField(
@@ -155,9 +164,44 @@ class Product(models.Model):
     )
     description = HTMLField("Описание")
 
+    # --- Управление наличием (Stock) ---
+    availability_status = models.CharField(
+        "Статус наличия",
+        max_length=20,
+        choices=AvailabilityStatus.choices,
+        default=AvailabilityStatus.IN_STOCK,
+        help_text="Управляет логикой отображения кнопки покупки и бейджей."
+    )
+    
+    stock_quantity = models.PositiveIntegerField(
+        "Количество на складе",
+        default=0,
+        help_text="Реальное количество товара. Если 0 и статус 'В наличии', товар все равно может быть куплен (зависит от галочки 'Разрешить предзаказ при 0')."
+    )
+
+    allow_backorder = models.BooleanField(
+        "Разрешить покупку при 0 кол-ве",
+        default=False,
+        help_text="Если включено, клиенты смогут купить товар, даже если на складе 0 (Backorder)."
+    )
+    
+    restock_date = models.DateField(
+        "Ожидаемая дата поступления",
+        null=True,
+        blank=True,
+        help_text="Для товаров со статусом 'Предзаказ' или 'Под заказ'. Будет показана клиенту."
+    )
+    
+    low_stock_threshold = models.PositiveIntegerField(
+        "Порог 'Мало на складе'",
+        default=3,
+        help_text="Если количество меньше или равно этому числу (и больше 0), клиент увидит предупреждение 'Осталось мало!'."
+    )
+    # ------------------------------------
+
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products", verbose_name="Категория")
     info_panels = models.ManyToManyField(InfoPanel, blank=True, verbose_name="Информационные панельки")
-    is_active = models.BooleanField("Активен (виден клиенту)", default=True)
+    is_active = models.BooleanField("Активен", default=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     main_image = models.ImageField("Главное фото (оригинал)", upload_to='products/main/original/')
     main_image_thumbnail = ImageSpecField(source='main_image',
@@ -190,6 +234,30 @@ class Product(models.Model):
             return self.deal_price
         return self.regular_price
 
+    @property
+    def can_be_purchased(self):
+        """
+        Может ли товар быть добавлен в корзину?
+        """
+        # Если явно снят с продажи или под заказ (через менеджера)
+        if self.availability_status in [self.AvailabilityStatus.DISCONTINUED, self.AvailabilityStatus.ON_DEMAND]:
+            return False
+            
+        # Если статус "В наличии"
+        if self.availability_status == self.AvailabilityStatus.IN_STOCK:
+            # Можно купить если есть на складе ИЛИ разрешен backorder
+            return self.stock_quantity > 0 or self.allow_backorder
+            
+        # Если предзаказ - всегда можно оформить (обычно)
+        if self.availability_status == self.AvailabilityStatus.PRE_ORDER:
+            return True
+            
+        # Если "Нет в наличии" - очевидно нет
+        if self.availability_status == self.AvailabilityStatus.OUT_OF_STOCK:
+            return False
+            
+        return False
+
     def __str__(self):
         return f"{self.name} ({self.sku})" if self.sku else self.name
 
@@ -213,7 +281,7 @@ class Product(models.Model):
 
         # Логика генерации SKU на основе полученного ID (если SKU не задан вручную)
         if is_new and not self.sku:
-            self.sku = f"BF-{self.pk:08d}"
+            self.sku = f"BF-{self.pk:04d}"
             # Используем update_fields для производительности, чтобы не вызывать повторно полный save()
             Product.objects.filter(pk=self.pk).update(sku=self.sku)
 
@@ -221,6 +289,13 @@ class Product(models.Model):
         verbose_name = "Товар"
         verbose_name_plural = "Товары"
         ordering = ['-created_at']
+        indexes = [
+            GinIndex(
+                fields=['name'],
+                name='product_name_trgm_idx',
+                opclasses=['gin_trgm_ops']
+            ),
+        ]
 
     @classmethod
     def annotate_with_price(cls, queryset):
@@ -350,14 +425,7 @@ class ShopSettings(models.Model):
     warranty_section = HTMLField("Блок 'Гарантия и возврат'", blank=True)
     free_shipping_threshold = models.DecimalField("Порог бесплатной доставки", max_digits=10, decimal_places=2, null=True, blank=True, help_text="Оставьте пустым или 0, чтобы отключить эту функцию")
     search_placeholder = models.CharField("Плейсхолдер в строке поиска", max_length=150, default="Найти чехол или наушники...")
-    search_initial_text = models.CharField("Текст до начала поиска", max_length=255, default="Начните вводить, чтобы найти товар")
-    search_lottie_file = models.FileField(
-        "Файл Lottie-анимации (.json) для Поиска", # Уточняем название
-        upload_to='lottie/',
-        blank=True,
-        null=True,
-        help_text="Отображается на пустой странице поиска"
-    )
+
 
     # --- НОВОЕ ПОЛЕ ДЛЯ АНИМАЦИИ В КОРЗИНЕ ---
     cart_lottie_file = models.FileField(
@@ -366,6 +434,15 @@ class ShopSettings(models.Model):
         blank=True,
         null=True,
         help_text="Отображается в пустой корзине"
+    )
+
+    # --- НОВОЕ ПОЛЕ ДЛЯ АНИМАЦИИ УСПЕХА ---
+    order_success_lottie_file = models.FileField(
+        "Файл Lottie-анимации (.json) для Страницы Успеха",
+        upload_to='lottie/',
+        blank=True,
+        null=True,
+        help_text="Отображается после оформления заказа (галочка/салют)"
     )
 
     article_font_family = models.CharField("Название шрифта для статей", max_length=100, default="Exo 2",help_text="Например: 'Roboto', 'Times New Roman', 'Exo 2'")
@@ -650,9 +727,18 @@ class Article(models.Model):
 class Backup(models.Model):
     # Разрешаем оставлять пустым для авто-заполнения
     name = models.CharField("Название / Комментарий", max_length=255, blank=True)
-    file = models.FileField("Файл архива (.zip)", upload_to='backups/', help_text="Содержит базу данных и медиафайлы")
+    file = models.FileField("Файл архива (.zip)", upload_to='backups/', help_text="Содержит базу данных и медиафайлы", null=True, blank=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     size = models.CharField("Размер", max_length=50, blank=True)
+
+    STATUS_CHOICES = (
+        ('pending', 'В очереди'),
+        ('processing', 'Создается...'),
+        ('success', 'Готово'),
+        ('failed', 'Ошибка'),
+    )
+    status = models.CharField("Статус", max_length=20, choices=STATUS_CHOICES, default='success') # Default success for old backups
+    log = models.TextField("Лог операций", blank=True)
 
     def __str__(self):
         # Если есть имя, показываем его, иначе дату

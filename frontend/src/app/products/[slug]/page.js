@@ -1,58 +1,37 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import ProductPageClient from '@/components/ProductPageClient';
+import ProductPageClient from '@/components/pages/ProductPageClient';
 
 // --- НАСТРОЙКИ КЕШИРОВАНИЯ (ISR) ---
-export const revalidate = 3600;
+// --- НАСТРОЙКИ КЕШИРОВАНИЯ (ISR) ---
+// export const revalidate = 0; // Disable cache for debugging
+export const revalidate = 3600; // 1 час (оптимально для SEO и производительности)
 export const dynamicParams = true;
 
 // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (SERVER-SIDE ONLY) ---
 
-const getBaseUrl = () => {
-    return process.env.INTERNAL_API_URL || 'http://backend:8000/api';
-};
+import { fetchServerData } from '@/lib/serverUtils';
 
 // --- ИЗМЕНЕНИЕ 1: Функция теперь принимает SLUG, а не ID ---
 async function getProduct(slug) {
-    try {
-        // Запрос к API теперь идет по URL /products/<slug>/
-        // (убедитесь, что в backend/shop/urls.py стоит <slug:slug>)
-        const res = await fetch(`${getBaseUrl()}/products/${slug}/`, {
-            next: { revalidate: 3600 }
-        });
-
-        if (!res.ok) {
-            if (res.status === 404) return null;
-            throw new Error('Failed to fetch product');
-        }
-
-        return res.json();
-    } catch (error) {
-        console.error(`Error fetching product ${slug}:`, error);
-        return null;
-    }
+    // Используем централизованную утилиту, которая знает про Docker и 404
+    const data = await fetchServerData(`/products/${slug}/`, {
+        next: { revalidate: 3600 }
+    });
+    return data;
 }
 
 async function getSettings() {
-    try {
-        const res = await fetch(`${getBaseUrl()}/settings/`, {
-            next: { revalidate: 3600 }
-        });
-        if (!res.ok) return null;
-        return res.json();
-    } catch (error) {
-        console.error('Error fetching settings:', error);
-        return null;
-    }
+    return fetchServerData('/settings/', {
+        next: { revalidate: 3600 }
+    });
 }
 
 // 3. GENERATE STATIC PARAMS (SSG)
 export async function generateStaticParams() {
     try {
-        const res = await fetch(`${getBaseUrl()}/products/?page_size=100`);
-        const data = await res.json();
-
-        const products = data.results || data;
+        const data = await fetchServerData('/products/?page_size=100');
+        const products = data?.results || data;
 
         if (!Array.isArray(products)) return [];
 
@@ -82,7 +61,7 @@ export async function generateMetadata({ params }) {
     }
 
     const seoVars = {
-        '{{site_name}}': settings?.site_name || 'BonaFide55',
+        '{{site_name}}': settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop',
         '{{product_name}}': product.name,
         '{{product_price}}': new Intl.NumberFormat('ru-RU').format(product.price),
     };
@@ -113,7 +92,7 @@ export async function generateMetadata({ params }) {
             description: description,
             // --- ИЗМЕНЕНИЕ 5: OG URL тоже использует slug ---
             url: `${siteUrl}/products/${product.slug}`,
-            siteName: settings?.site_name || 'BonaFide55',
+            siteName: settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop',
             images: [
                 {
                     url: product.main_image_url || '',
@@ -140,7 +119,7 @@ export default async function ProductPage({ params }) {
     // Получаем settings для использования в Schema.org
     const settings = await getSettings();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
-    const siteName = settings?.site_name || 'Shop';
+    const siteName = settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop';
 
     const jsonLd = {
         '@context': 'https://schema.org',
@@ -159,9 +138,16 @@ export default async function ProductPage({ params }) {
                     priceCurrency: 'RUB',
                     price: product.price,
                     itemCondition: 'https://schema.org/NewCondition',
-                    availability: product.is_active
-                        ? 'https://schema.org/InStock'
-                        : 'https://schema.org/OutOfStock',
+                    availability: (() => {
+                        const map = {
+                            'IN_STOCK': 'https://schema.org/InStock',
+                            'OUT_OF_STOCK': 'https://schema.org/OutOfStock',
+                            'PRE_ORDER': 'https://schema.org/PreOrder',
+                            'DISCONTINUED': 'https://schema.org/Discontinued',
+                            'ON_DEMAND': 'https://schema.org/PreOrder',
+                        };
+                        return map[product.availability_status] || 'https://schema.org/InStock';
+                    })(),
                     seller: {
                         '@type': 'Organization',
                         name: siteName

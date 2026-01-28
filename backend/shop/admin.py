@@ -8,9 +8,12 @@ from io import BytesIO, StringIO
 from datetime import datetime
 
 from django.contrib import admin, messages
+from unfold.admin import ModelAdmin, TabularInline
+from unfold.contrib.filters.admin import RangeDateFilter, ChoicesDropdownFilter, ChoicesDropdownFilter, RelatedDropdownFilter, TextFilter, FieldTextFilter
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.shortcuts import render # Добавлено
 from django import forms
 from django.urls import path, reverse
 from django.core.management import call_command
@@ -40,7 +43,7 @@ class MultipleFileInput(forms.FileInput):
             self.attrs = {}
 
 # --- Все классы Inline остаются без изменений ---
-class FeatureInline(admin.TabularInline):
+class FeatureInline(TabularInline):
     model = Feature
     extra = 1
     verbose_name = "Особенность (функционал)"
@@ -48,20 +51,20 @@ class FeatureInline(admin.TabularInline):
     fields = ('name', 'order')
 
 @admin.register(Feature)
-class FeatureAdmin(admin.ModelAdmin):
+class FeatureAdmin(ModelAdmin):
     list_display = ('product', 'name', 'order')
     search_fields = ('name', 'product__name')
     list_filter = ('product',)
 
 
-class ProductCharacteristicInline(admin.TabularInline):
+class ProductCharacteristicInline(TabularInline):
     model = ProductCharacteristic
     extra = 1
     verbose_name = "Характеристика"
     verbose_name_plural = "Характеристики"
     autocomplete_fields = ['characteristic']
 
-class ProductImageInline(admin.TabularInline):
+class ProductImageInline(TabularInline):
     model = ProductImage
     extra = 0
     readonly_fields = ('display_image',) # Добавляем поле для предпросмотра
@@ -76,16 +79,16 @@ class ProductImageInline(admin.TabularInline):
     display_image.short_description = 'Превью'
 
 
-class ProductInfoCardInline(admin.TabularInline):
+class ProductInfoCardInline(TabularInline):
     model = ProductInfoCard
     extra = 0
     verbose_name = "Инфо-карточка (фича)"
     verbose_name_plural = "Инфо-карточки (фичи)"
     fields = ('image', 'title', 'link_url')
 
-class ShopImageInline(admin.TabularInline):
+class ShopImageInline(TabularInline):
     model = ShopImage
-    extra = 1
+    extra = 0
     verbose_name = "Фотография для страницы 'Информация'"
     verbose_name_plural = "Фотографии для страницы 'Информация'"
     fields = ('image', 'caption', 'order')
@@ -107,14 +110,21 @@ class ProductAdminForm(forms.ModelForm):
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(ModelAdmin):
     # 3. ИЗМЕНЕНИЕ: Подключаем нашу кастомную форму
     form = ProductAdminForm
 
-    list_display = ('name', 'sku', 'category', 'regular_price', 'is_active', 'display_deal_status')
-    list_filter = ('category', 'is_active', 'info_panels', 'color_group')
+    # ВАЖНО: availability_status должен быть в list_display, чтобы работать в list_editable
+    list_display = ('name', 'sku', 'category', 'regular_price', 'is_active', 'availability_status', 'stock_quantity', 'Display_availability_badge')
+    list_filter = (
+        ('category', RelatedDropdownFilter),
+        ('availability_status', ChoicesDropdownFilter), # Фильтр по наличию
+        ('is_active', ChoicesDropdownFilter),
+        ('color_group', RelatedDropdownFilter),
+        ('info_panels', RelatedDropdownFilter),
+    )
     search_fields = ('name', 'sku', 'description', 'characteristics__characteristic__name', 'characteristics__value')
-    list_editable = ('is_active',)
+    list_editable = ('is_active', 'stock_quantity', 'availability_status') # Быстрое редактирование
 
     # --- ИЗМЕНЕНИЕ 1: Добавляем автозаполнение (JS скрипт в админке) ---
     prepopulated_fields = {'slug': ('name',)}
@@ -130,6 +140,10 @@ class ProductAdmin(admin.ModelAdmin):
         ('Основная информация', {
             # --- ИЗМЕНЕНИЕ 2: Добавляем 'slug' в список отображаемых полей ---
             'fields': ('name', 'slug', 'sku', 'color_group', 'category', 'regular_price', 'description', 'is_active')
+        }),
+        ("Управление наличием (Склад)", {
+            'classes': ('tab',), # Выделяем в отдельный таб или блок
+            'fields': ('availability_status', 'stock_quantity', 'allow_backorder', 'low_stock_threshold', 'restock_date')
         }),
         ("Акция 'Товар дня'", {
             'classes': ('collapse',),
@@ -157,6 +171,23 @@ class ProductAdmin(admin.ModelAdmin):
     @admin.display(description='Товар дня?', boolean=True)
     def display_deal_status(self, obj):
         return obj.is_deal_of_the_day
+
+    @admin.display(description='Наличие')
+    def Display_availability_badge(self, obj):
+        # Красивые бейджики для статусов
+        colors = {
+            'IN_STOCK': 'green',
+            'OUT_OF_STOCK': 'red',
+            'PRE_ORDER': 'blue',
+            'DISCONTINUED': 'gray',
+            'ON_DEMAND': 'purple',
+        }
+        color = colors.get(obj.availability_status, 'gray')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_availability_status_display()
+        )
 
     actions = ['make_active', 'make_inactive', 'duplicate_product']
 
@@ -288,32 +319,32 @@ class ProductAdmin(admin.ModelAdmin):
 # --- Остальные классы вашей админ-панели остаются без изменений ---
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(ModelAdmin):
     list_display = ('__str__',)
     search_fields = ('name',)
 
 @admin.register(ColorGroup)
-class ColorGroupAdmin(admin.ModelAdmin):
+class ColorGroupAdmin(ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
 
 @admin.register(InfoPanel)
-class InfoPanelAdmin(admin.ModelAdmin):
+class InfoPanelAdmin(ModelAdmin):
     list_display = ('name', 'color', 'text_color')
 
 @admin.register(CharacteristicCategory)
-class CharacteristicCategoryAdmin(admin.ModelAdmin):
+class CharacteristicCategoryAdmin(ModelAdmin):
     list_display = ('name', 'order')
     list_editable = ('order',)
 
 @admin.register(Characteristic)
-class CharacteristicAdmin(admin.ModelAdmin):
+class CharacteristicAdmin(ModelAdmin):
     list_display = ('name', 'category')
-    list_filter = ('category',)
+    list_filter = (('category', RelatedDropdownFilter),)
     search_fields = ('name',)
 
 @admin.register(PromoBanner)
-class PromoBannerAdmin(admin.ModelAdmin):
+class PromoBannerAdmin(ModelAdmin):
     list_display = ('title', 'order', 'is_active', 'display_image')
     list_editable = ('order', 'is_active')
     search_fields = ('title',)
@@ -337,9 +368,12 @@ class PromoBannerAdmin(admin.ModelAdmin):
     display_image.short_description = 'Превью'
 
 @admin.register(DiscountRule)
-class DiscountRuleAdmin(admin.ModelAdmin):
+class DiscountRuleAdmin(ModelAdmin):
     list_display = ('name', 'discount_type', 'min_quantity', 'discount_percentage', 'is_active')
-    list_filter = ('discount_type', 'is_active')
+    list_filter = (
+        ('discount_type', ChoicesDropdownFilter),
+        ('is_active', ChoicesDropdownFilter)
+    )
     list_editable = ('is_active',)
     search_fields = ('name',)
 
@@ -361,7 +395,7 @@ class DiscountRuleAdmin(admin.ModelAdmin):
 
 
 @admin.register(ShopSettings)
-class ShopSettingsAdmin(admin.ModelAdmin):
+class ShopSettingsAdmin(ModelAdmin):
     inlines = [ShopImageInline]
     
     class Media:
@@ -370,47 +404,52 @@ class ShopSettingsAdmin(admin.ModelAdmin):
         }
 
     fieldsets = (
-        ('Основные настройки и брендинг', {
-            'fields': ('site_name', 'manager_username', 'manager_telegram_chat_id', 'telegram_channel_url', 'logo', 'og_default_image')
+        ('Основные настройки', {
+            'classes': ('tab',),
+            'fields': (
+                ('site_name', 'logo'),
+                ('manager_username', 'manager_telegram_chat_id'),
+                'telegram_channel_url',
+                'og_default_image'
+            )
         }),
-        ('Настройки страниц', {
-            'classes': ('collapse',),
-            'description': "Здесь настраиваются тексты и анимации для разных страниц.",
+        ('Настройки страниц (Тексты/Lottie)', {
+            'classes': ('tab',),
             'fields': (
                 'search_placeholder',
-                'search_initial_text',
-                'search_lottie_file',
+
                 'cart_lottie_file',
+                'order_success_lottie_file',
             )
         }),
-        ('Настройки Блога/Статей', {
-            'classes': ('collapse',),
-            'fields': ('article_font_family',)
-        }),
-        ('SEO Настройки', {
-            'classes': ('collapse',),
-            'description': "Управление мета-тегами для страниц. Вы можете использовать переменные, например <b>{{site_name}}</b>. Для страницы товара также доступны <b>{{product_name}}</b> и <b>{{product_price}}</b>.",
+        ('SEO (Мета-теги)', {
+            'classes': ('tab',),
+            'description': "Управление мета-тегами для страниц. Вы можете использовать переменные, например <b>{{site_name}}</b>.",
             'fields': (
-                'seo_title_home', 'seo_description_home',
-                'seo_title_blog', 'seo_description_blog',
-                'seo_title_product', 'seo_description_product',
-                'seo_title_cart', 'seo_description_cart',
-                'seo_title_faq', 'seo_description_faq',
-                'seo_title_checkout', 'seo_description_checkout',
+                ('seo_title_home', 'seo_description_home'),
+                ('seo_title_blog', 'seo_description_blog'),
+                ('seo_title_product', 'seo_description_product'),
+                ('seo_title_cart', 'seo_description_cart'),
+                ('seo_title_faq', 'seo_description_faq'),
+                ('seo_title_checkout', 'seo_description_checkout'),
             )
         }),
-        ('Настройки страницы "Информация" (FAQ)', {
-            'classes': ('collapse',),
-            'fields': ('about_us_section', 'delivery_section', 'warranty_section')
+        ('Контент (FAQ/Доставка)', {
+            'classes': ('tab',),
+            'fields': (
+                'about_us_section',
+                'delivery_section',
+                'warranty_section',
+                'article_font_family'
+            )
         }),
         ('Юридическая информация', {
-            'classes': ('collapse',),
-            'description': "Тексты документов, которые будут отображаться в приложении. Используйте форматирование для заголовков и списков.",
-            'fields': ('public_offer', 'privacy_policy')
-        }),
-        ('Коммерческие настройки', {
-            'classes': ('collapse',),
-            'fields': ('free_shipping_threshold',)
+            'classes': ('tab',),
+            'fields': (
+                'public_offer', 
+                'privacy_policy',
+                'free_shipping_threshold'
+            )
         }),
     )
 
@@ -421,12 +460,85 @@ class ShopSettingsAdmin(admin.ModelAdmin):
 
 
 @admin.register(FaqItem)
-class FaqItemAdmin(admin.ModelAdmin):
+class FaqItemAdmin(ModelAdmin):
     list_display = ('question', 'order', 'is_active')
     list_editable = ('order', 'is_active')
     search_fields = ('question', 'answer')
+    change_list_template = 'admin/shop/faqitem/change_list.html'
 
-class CartItemInline(admin.TabularInline):
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('import-json/', self.admin_site.admin_view(self.import_json_view), name='shop_faqitem_import'),
+        ]
+        return custom_urls + urls
+
+    def import_json_view(self, request):
+        # Внутренний класс формы
+        class FaqImportForm(forms.Form):
+            json_file = forms.FileField(required=False, label="JSON файл")
+            json_text = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 10, 'style': 'width: 100%;'}), label="JSON текст")
+
+            def clean(self):
+                cleaned_data = super().clean()
+                file = cleaned_data.get('json_file')
+                text = cleaned_data.get('json_text')
+                if not file and not text:
+                    raise forms.ValidationError("Загрузите файл или вставьте текст.")
+                return cleaned_data
+
+        if request.method == 'POST':
+            form = FaqImportForm(request.POST, request.FILES)
+            if form.is_valid():
+                data = None
+                try:
+                    # 1. Считываем данные
+                    if form.cleaned_data['json_file']:
+                        file = form.cleaned_data['json_file']
+                        content = file.read().decode('utf-8')
+                        data = json.loads(content)
+                    else:
+                        data = json.loads(form.cleaned_data['json_text'])
+
+                    # 2. Валидация формата
+                    if not isinstance(data, list):
+                        raise ValueError("Ожидается массив (список) объектов.")
+
+                    count = 0
+                    with transaction.atomic():
+                        for item in data:
+                            if 'question' not in item or 'answer' not in item:
+                                continue # Пропускаем некорректные
+                            
+                            FaqItem.objects.create(
+                                question=item.get('question'),
+                                answer=item.get('answer'),
+                                order=item.get('order', 0),
+                                is_active=item.get('is_active', True)
+                            )
+                            count += 1
+                    
+                    self.message_user(request, f"Успешно импортировано {count} вопросов.", messages.SUCCESS)
+                    return HttpResponseRedirect(reverse('admin:shop_faqitem_changelist'))
+
+                except json.JSONDecodeError:
+                    self.message_user(request, "Ошибка: Неверный формат JSON.", messages.ERROR)
+                except ValueError as ve:
+                    self.message_user(request, f"Ошибка данных: {str(ve)}", messages.ERROR)
+                except Exception as e:
+                    self.message_user(request, f"Системная ошибка: {str(e)}", messages.ERROR)
+        else:
+            form = FaqImportForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta,
+            'form': form,
+            'title': 'Импорт FAQ из JSON'
+        }
+        return render(request, 'admin/shop/faqitem/import_form.html', context)
+
+class CartItemInline(TabularInline):
     model = CartItem
     extra = 0
     readonly_fields = ('product', 'quantity', 'added_at')
@@ -435,7 +547,7 @@ class CartItemInline(admin.TabularInline):
     verbose_name_plural = "Товары в корзине"
 
 @admin.register(Cart)
-class CartAdmin(admin.ModelAdmin):
+class CartAdmin(ModelAdmin):
 
     list_display = ('telegram_id', 'created_at', 'updated_at')
     search_fields = ('telegram_id', 'session_key',)
@@ -448,7 +560,7 @@ class CartAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False if obj else True
 
-class OrderItemInline(admin.TabularInline):
+class OrderItemInline(TabularInline):
     model = OrderItem
     extra = 0
     readonly_fields = ('product', 'quantity', 'price_at_purchase')
@@ -457,9 +569,13 @@ class OrderItemInline(admin.TabularInline):
     verbose_name_plural = "Товары в заказе"
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(ModelAdmin):
     list_display = ('id', 'status', 'get_full_name', 'delivery_method', 'city', 'final_total', 'created_at')
-    list_filter = ('status', 'delivery_method', 'created_at')
+    list_filter = (
+        ('status', ChoicesDropdownFilter),
+        ('delivery_method', ChoicesDropdownFilter),
+        ('created_at', RangeDateFilter),
+    )
     search_fields = ('id', 'first_name', 'last_name', 'phone', 'city', 'cdek_office_address')
 
     readonly_fields = (
@@ -516,16 +632,22 @@ class OrderAdmin(admin.ModelAdmin):
 
 
 @admin.register(ArticleCategory)
-class ArticleCategoryAdmin(admin.ModelAdmin):
+class ArticleCategoryAdmin(ModelAdmin):
     list_display = ('name', 'slug')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)} # Автозаполнение slug из name
 
 @admin.register(Article)
-class ArticleAdmin(admin.ModelAdmin):
+class ArticleAdmin(ModelAdmin):
     # 1. ИЗМЕНЕНИЕ: Добавляем 'is_featured' и 'views_count' в список для удобства
     list_display = ('title', 'category', 'status', 'is_featured', 'views_count', 'published_at')
-    list_filter = ('status', 'category', 'is_featured', 'author', 'published_at')
+    list_filter = (
+        ('status', ChoicesDropdownFilter),
+        ('category', RelatedDropdownFilter),
+        ('is_featured', ChoicesDropdownFilter),
+        ('author', RelatedDropdownFilter),
+        ('published_at', RangeDateFilter),
+    )
     search_fields = ('title', 'content', 'meta_description')
     # 2. ИЗМЕНЕНИЕ: Позволяем быстро менять статус и закреплять статью
     list_editable = ('status', 'is_featured')
@@ -564,10 +686,10 @@ class ArticleAdmin(admin.ModelAdmin):
 
 
 @admin.register(Backup)
-class BackupAdmin(admin.ModelAdmin):
-    list_display = ('name', 'size_display', 'created_at', 'download_link')
+class BackupAdmin(ModelAdmin):
+    list_display = ('name', 'size_display', 'status', 'created_at', 'download_link')
     # Поля, которые нельзя редактировать вручную
-    readonly_fields = ('created_at', 'size', 'restore_warning')
+    readonly_fields = ('created_at', 'size', 'restore_warning', 'status', 'log')
 
     # Настройка формы редактирования
     def get_fieldsets(self, request, obj=None):
@@ -579,7 +701,7 @@ class BackupAdmin(admin.ModelAdmin):
                     'fields': ('restore_warning',)
                 }),
                 ('Детали архива', {
-                    'fields': ('name', 'file', 'size', 'created_at')
+                    'fields': ('name', 'file', 'size', 'created_at', 'status', 'log')
                 }),
             )
         else:
@@ -629,88 +751,46 @@ class BackupAdmin(admin.ModelAdmin):
     restore_warning.short_description = "Восстановление"
 
     # --- ЛОГИКА СОЗДАНИЯ БЭКАПА (ЭКСПОРТ) ---
+    # --- ЛОГИКА СОЗДАНИЯ БЭКАПА (ЭКСПОРТ) ---
     def create_backup_view(self, request):
         try:
-            # 1. Дамп базы данных в память
-            buf = StringIO()
-            # Исключаем системные таблицы, чтобы избежать конфликтов
-            call_command('dumpdata', exclude=['auth.permission', 'contenttypes', 'admin.logentry', 'sessions', 'shop.backup'], stdout=buf)
-            buf.seek(0)
-            db_json = buf.read()
+            # Создаем запись статуса
+            timestamp = datetime.now().strftime('%d.%m.%Y %H:%M')
+            backup = Backup.objects.create(
+                name=f"Авто-бэкап от {timestamp}",
+                status='pending'
+            )
+            
+            # Запускаем задачу
+            from .tasks import create_backup_task
+            transaction.on_commit(lambda: create_backup_task.delay(backup.id))
 
-            # 2. Создаем ZIP архив
-            zip_buffer = BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                # Добавляем JSON базы
-                zip_file.writestr('db_dump.json', db_json)
-
-                # Добавляем папку media (картинки)
-                media_root = settings.MEDIA_ROOT
-                if os.path.exists(media_root):
-                    for root, dirs, files in os.walk(media_root):
-                        if 'backups' in dirs:
-                            dirs.remove('backups') # Не архивируем сами бэкапы рекурсивно
-
-                        for file in files:
-                            file_path = os.path.join(root, file)
-                            # Сохраняем относительный путь (media/products/img.jpg)
-                            arcname = os.path.relpath(file_path, start=os.path.dirname(media_root))
-                            zip_file.write(file_path, arcname)
-
-            # 3. Сохраняем файл
-            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
-            filename = f"backup_{timestamp}.zip"
-            backup = Backup(name=f"Авто-бэкап от {datetime.now().strftime('%d.%m.%Y %H:%M')}")
-            backup.file.save(filename, ContentFile(zip_buffer.getvalue()))
-            backup.save()
-
-            self.message_user(request, "✅ Полный бэкап успешно создан!", messages.SUCCESS)
+            self.message_user(request, "⏳ Задача на создание бэкапа запущена в фоне. Обновите страницу через минуту.", messages.INFO)
         except Exception as e:
-            self.message_user(request, f"❌ Ошибка создания: {str(e)}", messages.ERROR)
+            self.message_user(request, f"❌ Ошибка запуска задачи: {str(e)}", messages.ERROR)
 
         return HttpResponseRedirect(reverse('admin:shop_backup_changelist'))
 
     # --- ЛОГИКА ВОССТАНОВЛЕНИЯ (ИМПОРТ) ---
-    @transaction.atomic
     def restore_backup_view(self, request, pk):
         backup = self.get_object(request, pk)
         if not backup:
             return HttpResponseRedirect(reverse('admin:shop_backup_changelist'))
 
         try:
-            with zipfile.ZipFile(backup.file.path, 'r') as zip_file:
-                # 1. Проверяем валидность архива
-                if 'db_dump.json' not in zip_file.namelist():
-                    raise Exception("Некорректный архив: отсутствует файл базы данных (db_dump.json)")
+            # Обновляем статус
+            backup.status = 'pending'
+            backup.save(update_fields=['status'])
+            
+            # Запускаем задачу
+            from .tasks import restore_backup_task
+            transaction.on_commit(lambda: restore_backup_task.delay(backup.id))
 
-                # 2. Восстанавливаем базу данных
-                json_data = zip_file.read('db_dump.json').decode('utf-8')
-
-                # Сохраняем во временную папку или в media, где есть права на запись
-                temp_file_path = os.path.join(settings.MEDIA_ROOT, 'temp_restore.json')
-                with open(temp_file_path, 'w') as tmp_file:
-                    tmp_file.write(json_data)
-
-                print("Загрузка данных в БД...")
-                # loaddata автоматически обновляет существующие записи по ID и создает новые
-                call_command('loaddata', temp_file_path)
-
-                if os.path.exists(temp_file_path):
-                    os.remove(temp_file_path)
-
-                # 3. Восстанавливаем медиафайлы
-                # Распаковываем в папку media, перезаписывая файлы
-                media_parent = os.path.dirname(settings.MEDIA_ROOT)
-
-                for member in zip_file.namelist():
-                    # Извлекаем только файлы из папки media/ и игнорируем папку backups/
-                    if member.startswith('media/') and 'backups/' not in member:
-                        zip_file.extract(member, media_parent)
-
-            self.message_user(request, "✅ Система успешно восстановлена из архива!", messages.SUCCESS)
+            self.message_user(request, "⏳ Восстановление запущена в фоне. Это может занять некоторое время.", messages.WARNING)
         except Exception as e:
-            # Благодаря @transaction.atomic изменения в БД откатятся при ошибке
-            self.message_user(request, f"❌ Ошибка восстановления: {str(e)}", messages.ERROR)
+            self.message_user(request, f"❌ Ошибка запуска восстановления: {str(e)}", messages.ERROR)
+            
+        return HttpResponseRedirect(reverse('admin:shop_backup_changelist'))
 
         return HttpResponseRedirect(reverse('admin:shop_backup_changelist'))
 

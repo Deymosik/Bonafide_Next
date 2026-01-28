@@ -1,0 +1,332 @@
+/* src/components/CartItem.module.css */
+
+.cart-item {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: var(--app-secondary-bg-color);
+    padding: 16px;
+    border-radius: 20px;
+    animation: fadeIn 0.3s ease;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hover effect */
+@media (min-width: 1024px) {
+    .cart-item:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        transform: translateY(-2px);
+        background-color: var(--app-bg-color);
+        /* Slight highlight */
+    }
+}
+
+/* --- Content Wrapper (Image + Info) --- */
+.cart-item-content-wrapper {
+    display: flex;
+    gap: 16px;
+    cursor: pointer;
+    position: relative;
+}
+
+/* Checkbox Wrapper */
+.checkbox-wrapper {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    z-index: 5;
+}
+
+.cart-item-image-container {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.cart-item-img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 16px;
+    display: block;
+    background-color: var(--app-bg-color);
+}
+
+.cart-item-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-top: 2px;
+}
+
+.cart-item-name {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--app-text-color);
+    margin-bottom: 4px;
+}
+
+.cart-item-price-container {
+    display: flex;
+    flex-direction: column;
+    /* Vertical stack for mobile */
+    align-items: flex-start;
+    gap: 2px;
+    /* Tight gap */
+    margin-top: 4px;
+}
+
+.new-price {
+    font-weight: 700;
+    font-size: 17px;
+    /* Larger */
+    line-height: 1.2;
+    color: var(--app-text-color);
+}
+
+.old-price {
+    font-size: 13px;
+    line-height: 1.2;
+    text-decoration: line-through;
+    color: var(--app-hint-color);
+}
+
+.normal-price {
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.2;
+    color: var(--app-text-color);
+}
+
+/* --- Actions Row (Share + Controls) --- */
+.cart-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+/* Controls Block */
+.cart-item-controls {
+    display: flex;
+    align-items: center;
+    background-color: var(--app-bg-color);
+    border-radius: 100px;
+    /* Capsule */
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cart-item-controls button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--app-text-color);
+    font-size: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.cart-item-controls button:active:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.cart-item-controls button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.cart-item-controls span {
+    font-weight: 600;
+    font-size: 16px;
+    min-width: 24px;
+    text-align: center;
+    color: var(--app-text-color);
+}
+
+/* Share Button */
+.share-button-cart {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: var(--app-bg-color);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--app-text-color);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.share-button-cart:active {
+    transform: scale(0.95);
+}
+
+.share-button-cart svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 1.8;
+}
+
+/* --- Checkbox Styles --- */
+.custom-checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--checkbox-border-color, #d1d1d6);
+    background-color: var(--app-bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.custom-checkbox.checked {
+    background-color: var(--app-button-color);
+    border-color: var(--app-button-color);
+}
+
+.custom-checkbox svg {
+    width: 14px;
+    height: 14px;
+    stroke: #fff;
+    stroke-width: 3;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+}
+
+.custom-checkbox.checked svg {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* =========================================
+   DESKTOP ADAPTATION (>= 1024px) 
+   ========================================= */
+/* =========================================
+   DESKTOP ADAPTATION (>= 1024px) 
+   ========================================= */
+@media (min-width: 1024px) {
+    .cart-item {
+        flex-direction: row;
+        align-items: center;
+        padding: 16px;
+        /* Compact padding */
+        gap: 16px;
+    }
+
+    /* Reset vertical gaps */
+
+    /* Reset vertical gaps */
+
+    .cart-item-content-wrapper {
+        flex-grow: 1;
+        align-items: center;
+        gap: 16px;
+        min-width: 0;
+        /* CRITICAL: Allows text truncation/wrapping in flex child */
+    }
+
+    /* Checkbox remains absolute overlay */
+
+    .cart-item-img {
+        width: 72px;
+        /* Smaller image */
+        height: 72px;
+        border-radius: 12px;
+    }
+
+    .cart-item-info {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        /* Space between Name and Price */
+        gap: 16px;
+        padding: 0;
+        min-width: 0;
+        /* Allow shrinking */
+        flex-grow: 1;
+    }
+
+    .cart-item-name {
+        margin-bottom: 0;
+        font-size: 15px;
+        /* Slightly smaller font */
+        line-height: 1.3;
+        /* Allow wrapping */
+        flex-grow: 1;
+        min-width: 0;
+        /* CRITICAL */
+    }
+
+    /* Price container fixed width or tight fit */
+    .cart-item-price-container {
+        margin-left: 0;
+        /* Reset margin */
+        flex-direction: column;
+        align-items: flex-end;
+        min-width: auto;
+        /* Don't force 100px */
+        flex-shrink: 0;
+        /* Don't squash price */
+        text-align: right;
+    }
+
+    /* Actions Row becomes part of the main flex line or sits at the end */
+    .cart-actions-row {
+        margin-top: 0;
+        gap: 12px;
+        /* Tighter gap */
+        justify-content: flex-end;
+        width: auto;
+        flex-shrink: 0;
+        /* Don't squash buttons */
+    }
+
+    .share-button-cart {
+        order: 2;
+        box-shadow: none;
+        background: transparent;
+        border: 1px solid var(--app-separator-color);
+        width: 36px;
+        /* Match controls height */
+        height: 36px;
+    }
+
+    .share-button-cart:hover {
+        background-color: var(--app-secondary-bg-color);
+    }
+
+    .cart-item-controls {
+        order: 1;
+        box-shadow: none;
+        border: 1px solid var(--app-separator-color);
+        /* 36px button + padding 4px = 44px height usually, here internal buttons are 36px */
+        /* Let's keep consistent size */
+    }
+}

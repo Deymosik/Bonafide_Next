@@ -1,0 +1,197 @@
+/* src/components/CheckoutForm.module.css */
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-section {
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 20px;
+    padding: 24px;
+    animation: fadeIn 0.4s ease;
+}
+
+.section-header {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0 0 20px 0;
+    color: var(--app-text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Fields */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 640px) {
+    .form-grid.cols-2 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.form-input {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    background-color: var(--app-bg-color);
+    border: 1px solid transparent;
+    /* No border by default for cleaner look */
+    border-radius: 12px;
+    color: var(--app-text-color);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    /* Subtle lift */
+    box-sizing: border-box;
+}
+
+.form-input::placeholder {
+    color: var(--app-hint-color);
+    opacity: 0.7;
+}
+
+.form-input:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--app-button-color);
+    background-color: var(--app-bg-color);
+    box-shadow: 0 0 0 3px rgba(var(--app-button-color-rgb, 201, 158, 16), 0.15);
+}
+
+.form-input.invalid {
+    border-color: var(--app-destructive-text-color);
+    background-color: rgba(255, 59, 48, 0.05);
+}
+
+.error-message {
+    color: var(--app-destructive-text-color);
+    font-size: 13px;
+    margin-top: 6px;
+    margin-left: 4px;
+    font-weight: 500;
+}
+
+/* Shipping Options */
+.shipping-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.shipping-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    border-radius: 16px;
+    background-color: var(--app-bg-color);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: hidden;
+}
+
+.shipping-card input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.shipping-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.shipping-card.active {
+    border-color: var(--app-button-color);
+    background-color: var(--app-bg-color);
+    /* Kept white/dark */
+    box-shadow: 0 0 0 1px var(--app-button-color);
+    /* Double border effect */
+}
+
+.icon-wrapper {
+    height: 48px;
+    width: 100%;
+    /* Occupy full width of card */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    color: var(--app-text-color);
+    overflow: hidden;
+    /* Prevent overflow */
+}
+
+.icon-wrapper svg {
+    max-height: 32px;
+    height: auto;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    /* Removes weird inline spacing */
+}
+
+.shipping-label {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--app-text-color);
+}
+
+/* Address Fields Group */
+.address-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.3s ease;
+}
+
+.delivery-hint {
+    font-size: 14px;
+    color: var(--app-hint-color);
+    background-color: rgba(0, 0, 0, 0.04);
+    padding: 12px;
+    border-radius: 12px;
+    line-height: 1.5;
+    margin-bottom: 4px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

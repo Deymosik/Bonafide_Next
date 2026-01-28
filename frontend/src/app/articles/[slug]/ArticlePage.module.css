@@ -1,5 +1,28 @@
 /* frontend/src/app/articles/[slug]/ArticlePage.module.css */
 
+/* --- Scoped Dark Mode for Reading --- */
+/* --- Scoped Dark Mode for Reading --- */
+:global([data-theme='dark']) .article-page {
+    /* Override Semantic Tokens (Local Scope) */
+    --color-bg-base: #121212;
+    --color-bg-secondary: #1c1c1e;
+    --color-text-primary: #e0e0e0;
+    --color-text-secondary: #98989e;
+    --color-separator: #38383a;
+
+    /* Override specific atoms that don't have semantic mapping yet */
+    --app-link-color: #0a84ff;
+    --link-color: #0a84ff;
+
+    /* CRITICAL FIX: Re-bind Legacy Aliases to local scope variables */
+    /* Since legacy aliases are defined in :root, they don't auto-update when --color-bg-base changes locally. */
+    --app-bg-color: var(--color-bg-base);
+    --app-secondary-bg-color: var(--color-bg-secondary);
+    --app-text-color: var(--color-text-primary);
+    --app-hint-color: var(--color-text-secondary);
+    --app-separator-color: var(--color-separator);
+}
+
 /* --- Базовые настройки страницы --- */
 .article-page {
     /* Цвета берутся из globals.css (data-theme) автоматически */

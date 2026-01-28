@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import React from 'react';
-import ArticleListClient from '@/components/ArticleListClient';
+import ArticleListClient from '@/components/articles/ArticleListClient';
 // Импортируем наши серверные утилиты
 import { fetchServerData, getShopSettings, replaceSeoVariables } from '@/lib/serverUtils';
 
@@ -9,7 +9,7 @@ import { fetchServerData, getShopSettings, replaceSeoVariables } from '@/lib/ser
  */
 export async function generateMetadata() {
     const settings = await getShopSettings();
-    const seoVars = { site_name: settings?.site_name || 'BonaFide55' };
+    const seoVars = { site_name: settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop' };
 
     const title = replaceSeoVariables(settings?.seo_title_blog, seoVars) || 'Блог';
     const description = replaceSeoVariables(settings?.seo_description_blog, seoVars) || 'Полезные статьи и обзоры.';

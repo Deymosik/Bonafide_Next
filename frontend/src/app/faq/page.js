@@ -2,7 +2,7 @@ export const revalidate = 3600; // Кешируем страницу на 1 ча
 export const dynamic = 'force-dynamic';
 
 import React from 'react';
-import FaqPageClient from '@/components/FaqPageClient';
+import FaqPageClient from '@/components/pages/FaqPageClient';
 // Импортируем наши централизованные утилиты
 import { fetchServerData, getShopSettings, replaceSeoVariables } from '@/lib/serverUtils';
 
@@ -11,7 +11,7 @@ import { fetchServerData, getShopSettings, replaceSeoVariables } from '@/lib/ser
  */
 export async function generateMetadata() {
     const settings = await getShopSettings();
-    const seoVars = { site_name: settings?.site_name || 'BonaFide55' };
+    const seoVars = { site_name: settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop' };
 
     const title = replaceSeoVariables(settings?.seo_title_faq, seoVars) || 'Информация и FAQ';
     const description = replaceSeoVariables(settings?.seo_description_faq, seoVars) || 'Ответы на частые вопросы и информация о магазине.';

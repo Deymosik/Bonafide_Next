@@ -1,0 +1,114 @@
+/* src/components/CheckoutSummary.module.css */
+
+.summary-card {
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 20px;
+    padding: 24px;
+    position: sticky;
+    top: 110px;
+    /* Offset for header */
+    animation: fadeIn 0.4s ease;
+}
+
+.summary-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    color: var(--app-text-color);
+}
+
+.summary-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    color: var(--app-hint-color);
+}
+
+.row.total {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--app-separator-color);
+    color: var(--app-text-color);
+    font-weight: 700;
+    font-size: 18px;
+    align-items: flex-end;
+}
+
+.total-label {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.total-value-large {
+    font-size: 22px;
+}
+
+/* Agreement Checkbox */
+.agreement-container {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.agreement-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--app-button-color);
+    cursor: pointer;
+}
+
+.agreement-label {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--app-hint-color);
+    cursor: pointer;
+}
+
+.agreement-link {
+    color: var(--app-link-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+    transition: transform 0.2s, opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.submit-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.submit-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--app-secondary-bg-color);
+    /* Fallback or gray */
+    color: var(--app-hint-color);
+}

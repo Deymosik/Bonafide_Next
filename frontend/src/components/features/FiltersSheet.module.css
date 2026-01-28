@@ -1,0 +1,221 @@
+/* frontend/src/components/FiltersSheet.module.css */
+
+.filters-sheet {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    /* Ensure it fills the BottomSheet content area */
+    max-height: 85vh;
+}
+
+/* HEADER */
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Reduced padding to 16px */
+    padding: 16px 16px 12px 16px;
+    border-bottom: 1px solid var(--app-separator-color);
+    flex-shrink: 0;
+    /* Header determines its own height */
+}
+
+.header-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--app-text-color);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.header-btn {
+    background: none;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 0;
+    z-index: 10;
+}
+
+.header-btn:active {
+    opacity: 0.6;
+}
+
+.header-btn.reset {
+    color: var(--app-destructive-text-color, #ff3b30);
+}
+
+.close-btn {
+    background: var(--app-secondary-bg-color);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--app-hint-color);
+    font-size: 20px;
+    z-index: 10;
+}
+
+/* SCROLLABLE CONTENT */
+.filters-content {
+    flex: 1;
+    overflow-y: auto;
+    /* Reduced horizontal padding for content */
+    padding: 16px;
+    /* Hide scrollbar */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.filters-content::-webkit-scrollbar {
+    display: none;
+}
+
+/* SECTIONS */
+.filters-section {
+    margin-bottom: 32px;
+}
+
+.filters-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: var(--app-hint-color);
+}
+
+/* SORT OPTIONS (Matching CartItem Checkbox Style) */
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background-color: var(--app-bg-color);
+    /* border: 1px solid transparent; Remove border for cleaner look */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--app-text-color);
+}
+
+.option-item:active {
+    background-color: var(--app-secondary-bg-color);
+    transform: scale(0.99);
+}
+
+/* Custom Checkbox (Radio style) matching CartItem */
+.custom-checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--checkbox-border-color, #d1d1d6);
+    background-color: var(--app-bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.option-item.active .custom-checkbox {
+    background-color: var(--app-button-color);
+    border-color: var(--app-button-color);
+}
+
+.custom-checkbox svg {
+    width: 14px;
+    height: 14px;
+    stroke: #fff;
+    stroke-width: 3;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+    fill: none;
+    /* Ensure fill is none for check icon usually */
+}
+
+.option-item.active .custom-checkbox svg {
+    opacity: 1;
+    transform: scale(1);
+}
+
+
+/* CATEGORIES */
+.category-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.category-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    justify-content: space-between;
+    color: var(--app-text-color);
+    transition: background 0.2s;
+}
+
+.category-row:active {
+    background-color: var(--app-secondary-bg-color);
+}
+
+.category-row.active {
+    color: var(--app-button-color);
+    font-weight: 600;
+    background-color: var(--app-secondary-bg-color);
+}
+
+/* BOTTOM BUTTON (Footer) */
+.bottom-actions {
+    flex-shrink: 0;
+    /* Reduced padding */
+    padding: 16px;
+    /* Add safe area bottom padding */
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    background: var(--app-bg-color);
+    border-top: 1px solid var(--app-separator-color);
+}
+
+.apply-btn {
+    width: 100%;
+    height: 56px;
+    /* Taller button */
+    background-color: var(--app-button-color);
+    color: var(--app-button-text-color);
+    border: none;
+    border-radius: 16px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.apply-btn:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+}

@@ -10,10 +10,43 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+    networks:
+      - bonafide_network
+
+  # --- Redis (Broker & Cache) ---
+  redis:
+    image: redis:alpine
+    container_name: bonafide_redis
+    expose:
+      - 6379
+    restart: unless-stopped
+    networks:
+      - bonafide_network
+
+  # --- Celery Worker ---
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bonafide_celery
+    command: celery -A backend worker -l info
+    volumes:
+      - staticfiles_volume:/app/staticfiles
+      - media_volume:/app/media
+    env_file:
+      - .env
+    environment:
+      # Внутри Docker сеть 'redis' доступна по имени сервиса
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
     restart: unless-stopped
     networks:
       - bonafide_network
@@ -33,6 +66,9 @@ services:
       - 8000
     env_file:
       - .env
+    environment:
+      # Добавляем имя контейнера в разрешенные хосты, чтобы Nginx мог проксировать запросы
+      - ALLOWED_HOSTS_STR=127.0.0.1,localhost,bonafide_backend,your-domain.com
     depends_on:
       db:
         condition: service_healthy
@@ -46,10 +82,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod # Важно: используем prod версию
     container_name: bonafide_frontend
-    env_file:
-      - .env
-    expose:
-      - 3000
+    # На продакшене билд происходит при сборке образа, но переменные рантайма нужны
+    environment:
+      # Важно! Эти переменные нужны для SSR, чтобы Next.js мог общаться с бэкендом внутри Docker сети
+      - DJANGO_API_URL=http://backend:8000
+      - DOCKER_INTERNAL_URL=http://backend:8000
+      # Публичный URL (будет передан через Nginx или .env файл)
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://your-domain.com/api}
     depends_on:
       - backend
     restart: unless-stopped
@@ -89,6 +128,7 @@ volumes:
   postgres_data:
   staticfiles_volume:
   media_volume:
+
 
 networks:
   bonafide_network:

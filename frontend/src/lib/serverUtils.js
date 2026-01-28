@@ -2,19 +2,20 @@
 
 // Определяем правильный URL
 const getServerApiUrl = () => {
-    // 1. Если задана специальная переменная (в Dockerfile)
-    if (process.env.INTERNAL_API_URL) {
-        return process.env.INTERNAL_API_URL;
+    // 1. Приоритет: Специальная переменная для Docker (чтобы обойти локальные конфиги)
+    if (process.env.DOCKER_INTERNAL_URL) {
+        return process.env.DOCKER_INTERNAL_URL;
     }
-    // 2. Если мы в продакшене (внутри Docker), но переменной нет -> идем к соседу
-    if (process.env.NODE_ENV === 'production') {
-        return 'http://backend:8000/api';
+    // 2. Стандартная переменная
+    if (process.env.DJANGO_API_URL) {
+        return process.env.DJANGO_API_URL;
     }
-    // 3. Иначе (локальная разработка npm run dev) -> localhost
-    return 'http://127.0.0.1:8000/api';
+    // 3. Fallback
+    return 'http://127.0.0.1:8000';
 };
-
-const SERVER_API_URL = getServerApiUrl();
+const API_BASE = getServerApiUrl();
+// Убираем лишний слэш если он есть, и добавляем /api
+const SERVER_API_URL = `${API_BASE.replace(/\/$/, '')}/api`;
 
 /**
  * Универсальная функция для получения данных с API на сервере
@@ -27,6 +28,13 @@ export async function fetchServerData(endpoint, options = {}) {
         fetchOptions.cache = 'no-store';
     }
 
+    // ВАЖНО: Подменяем Host заголовок, чтобы Django генерировал ссылки как для localhost:8000,
+    // а не для backend:8000 (который не доступен из браузера).
+    fetchOptions.headers = {
+        ...fetchOptions.headers,
+        'Host': 'localhost:8000',
+    };
+
     try {
         const res = await fetch(`${SERVER_API_URL}${endpoint}`, fetchOptions);
 
@@ -35,7 +43,16 @@ export async function fetchServerData(endpoint, options = {}) {
             console.error(`Fetch error ${endpoint}: ${res.status}`);
             return null;
         }
-        return res.json();
+        // Читаем ответ как текст, чтобы "на лету" подменить внутренние домены Docker на localhost
+        const text = await res.text();
+        const safeText = text.replace(/http:\/\/backend:8000/g, 'http://localhost:8000');
+
+        try {
+            return JSON.parse(safeText);
+        } catch (e) {
+            console.error(`JSON Parse error ${endpoint}`, e);
+            return null;
+        }
     } catch (error) {
         console.error(`Network error ${endpoint} (${SERVER_API_URL}):`, error.message);
         return null;

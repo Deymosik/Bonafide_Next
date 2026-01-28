@@ -1,0 +1,214 @@
+/* frontend/src/components/DealOfTheDay.module.css */
+/* Modern Grid Layout for Deal of the Day */
+/* V2: Horizontal Layout for Mobile to correct vertical size */
+
+.deal-container {
+    display: grid;
+    /* Mobile: Horizontal layout (Image Left, Content Right) */
+    grid-template-columns: 35% 65%;
+    grid-template-rows: 1fr;
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 20px;
+    margin: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--app-text-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+    /* Limit height on mobile to keep it compact */
+    min-height: 140px;
+}
+
+.deal-container:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.deal-container:active {
+    transform: scale(0.99);
+}
+
+/* --- Image Section --- */
+.deal-image {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* Stretch to fill height */
+    overflow: hidden;
+}
+
+/* Badge on Image */
+.deal-discount-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: var(--app-destructive-text-color);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+}
+
+/* --- Content Section --- */
+.deal-info {
+    padding: 16px;
+    /* Compact padding for mobile */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    /* Compact gap */
+}
+
+/* "Hot Deal" text */
+.deal-badge {
+    align-self: flex-start;
+    background: linear-gradient(135deg, #ff8a00, #e52e71);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.deal-name {
+    font-size: 16px;
+    /* Smaller font for mobile horizontal */
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.25;
+    /* Limit to 2 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Price Block */
+.deal-price-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.deal-new-price {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--app-text-color);
+    letter-spacing: -0.5px;
+}
+
+.deal-old-price {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--app-hint-color);
+    text-decoration: line-through;
+}
+
+/* --- Countdown Timer --- */
+.deal-countdown {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--app-separator-color, rgba(0, 0, 0, 0.05));
+    /* On very small screens, ensure it fits */
+}
+
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.countdown-value {
+    font-size: 16px;
+    /* Compact timer */
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--app-text-color);
+}
+
+.countdown-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    color: var(--app-hint-color);
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+
+/* --- DESKTOP / TABLET (Landscape) --- */
+@media (min-width: 600px) {
+    .deal-container {
+        /* Grid 2 columns */
+        grid-template-columns: 35% 65%;
+        /* Narrower image */
+        grid-template-rows: 1fr;
+        height: 200px;
+        /* Reduced height for clean horizontal card */
+    }
+
+
+
+    .deal-discount-badge {
+        top: 10px;
+        left: 10px;
+        padding: 4px 10px;
+        font-size: 13px;
+        border-radius: 10px;
+    }
+
+    .deal-info {
+        padding: 24px;
+        /* Reduced padding */
+        gap: 10px;
+        /* Reduced gap */
+    }
+
+    .deal-badge {
+        font-size: 11px;
+        margin-bottom: 2px;
+    }
+
+    .deal-name {
+        font-size: 20px;
+        /* Smaller font */
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
+
+    .deal-new-price {
+        font-size: 28px;
+        /* Smaller price font */
+    }
+
+    .deal-old-price {
+        font-size: 15px;
+    }
+
+    .deal-countdown {
+        gap: 20px;
+        margin-top: 6px;
+        padding-top: 12px;
+    }
+
+    .countdown-value {
+        font-size: 22px;
+        /* Smaller timer font */
+    }
+
+    .countdown-label {
+        font-size: 9px;
+        margin-top: 3px;
+    }
+}

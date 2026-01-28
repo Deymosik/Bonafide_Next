@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import ArticlePageClient from '@/components/ArticlePageClient';
+import ArticlePageClient from '@/components/articles/ArticlePageClient';
 import { fetchServerData, getShopSettings, replaceSeoVariables } from '@/lib/serverUtils';
 
 export async function generateMetadata(props) {
@@ -15,7 +15,7 @@ export async function generateMetadata(props) {
 
     if (!article) return { title: 'Статья не найдена' };
 
-    const siteName = settings?.site_name || 'BonaFide55';
+    const siteName = settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop';
 
     const title = `${article.title} | ${siteName}`;
 
@@ -63,7 +63,7 @@ export default async function ArticlePage(props) {
 
     // Получаем настройки для Schema.org
     const settings = await getShopSettings();
-    const siteName = settings?.site_name || 'Shop';
+    const siteName = settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop';
 
     // 2. Формируем Rich Snippet для статьи (с Графом и Хлебными крошками)
     const jsonLd = {

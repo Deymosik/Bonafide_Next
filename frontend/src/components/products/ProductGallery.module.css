@@ -1,0 +1,57 @@
+/* src/components/ProductGallery.module.css */
+
+.product-swiper {
+    width: 100%;
+    aspect-ratio: 4/3;
+    /* Prevent collapse on mobile */
+    height: auto;
+}
+
+/* Mobile-first: Hide desktop grid by default */
+.gallery-desktop-grid {
+    display: none;
+}
+
+/* Hide Swiper on Desktop */
+@media (min-width: 1024px) {
+    .product-swiper {
+        display: none;
+    }
+
+    .gallery-desktop-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .gallery-main-image {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4/3;
+        /* Enforce 4:3 landscape ratio */
+        height: auto;
+        background-color: var(--app-secondary-bg-color);
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: zoom-in;
+    }
+
+    .gallery-thumbnails-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        /* 2 columns for thumbnails below */
+        gap: 16px;
+    }
+
+    .gallery-thumbnail {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4/3;
+        /* Enforce 4:3 for thumbnails too */
+        height: auto;
+        background-color: var(--app-secondary-bg-color);
+        border-radius: 16px;
+        overflow: hidden;
+        cursor: zoom-in;
+    }
+}

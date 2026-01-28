@@ -1,0 +1,158 @@
+/* frontend/src/components/ArticleCard.module.css */
+/* Premium Article Card Design */
+
+.article-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    /* Ensure it behaves as a block in grid */
+    height: 100%;
+    /* Stretch to fill grid cell height */
+}
+
+.article-card {
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 20px;
+    overflow: hidden;
+    height: 100%;
+    /* Stretch to fill link height */
+    display: flex;
+    flex-direction: column;
+    /* Soft premium shadow */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    /* Transition for hover effects */
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+    /* Border for slight definition on light themes */
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.article-card-link:hover .article-card {
+    /* Lift up effect */
+    transform: translateY(-8px);
+    /* Deeper shadow on hover */
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Image Section --- */
+.article-card-image-wrapper {
+    width: 100%;
+    /* 16:9 Aspect Ratio is standard and looks cinematic */
+    padding-top: 56.25%;
+    /* 16:9 */
+    position: relative;
+    background-color: var(--app-separator-color);
+    overflow: hidden;
+}
+
+.article-card-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Smooth scale on hover */
+    transition: transform 0.5s ease;
+}
+
+.article-card-link:hover .article-card-image {
+    /* Subtle zoom effect */
+    transform: scale(1.05);
+}
+
+/* --- Content Section --- */
+.article-card-info {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    /* Push footer (date) to bottom if needed */
+}
+
+/* Category Badge */
+.article-card-category {
+    display: inline-block;
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--app-button-color);
+    background: rgba(var(--app-button-color-rgb), 0.1);
+    /* Assuming variable setup, else simple color */
+    /* Fallback if RGB var not set, just text color is fine too, keeping it clean */
+    padding: 0;
+}
+
+/* Title */
+.article-card-title {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--app-text-color);
+    /* Clamp to 3 lines max */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    /* Transition color on hover */
+    transition: color 0.2s ease;
+}
+
+.article-card-link:hover .article-card-title {
+    color: var(--app-button-color);
+    /* Highlight title on hover */
+}
+
+/* Date */
+.article-card-date {
+    margin-top: auto;
+    /* Push to bottom of flex container */
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--app-hint-color);
+}
+
+/* --- Featured Badge --- */
+.article-card-featured-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+}
+
+.article-card-featured-badge:hover {
+    transform: scale(1.1) rotate(10deg);
+}
+
+.featured-icon {
+    width: 20px;
+    height: 20px;
+    color: #eab308;
+    /* Amber 500 */
+}
+
+/* Dark Mode Tweaks */
+@media (prefers-color-scheme: dark) {
+    .article-card {
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .article-card-featured-badge {
+        background: rgba(40, 40, 40, 0.9);
+        color: white;
+    }
+}

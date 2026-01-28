@@ -1,12 +1,12 @@
 // src/app/checkout/page.js
 export const dynamic = 'force-dynamic';
 import React from 'react';
-import CheckoutPageClient from '@/components/CheckoutPageClient';
+import CheckoutPageClient from '@/components/checkout/CheckoutPageClient';
 import { getShopSettings, replaceSeoVariables } from '@/lib/serverUtils';
 
 export async function generateMetadata() {
     const settings = await getShopSettings();
-    const seoVars = { site_name: settings?.site_name || 'BonaFide55' };
+    const seoVars = { site_name: settings?.site_name || process.env.NEXT_PUBLIC_SITE_NAME || 'Shop' };
 
     const title = replaceSeoVariables(settings?.seo_title_checkout, seoVars) || 'Оформление заказа';
     const description = replaceSeoVariables(settings?.seo_description_checkout, seoVars) || 'Безопасное оформление заказа.';

@@ -3,7 +3,7 @@ from django.urls import path
 from .views import (
     ProductListView, ProductDetailView, CategoryListView, PromoBannerListView,
     ShopSettingsView, FaqListView, DealOfTheDayView, CartView, CalculateSelectionView,
-    OrderCreateView, ArticleListView, ArticleDetailView, ArticleIncrementViewCountView,
+    OrderCreateView, OrderDetailView, ArticleListView, ArticleDetailView, ArticleIncrementViewCountView,
     TinyMCEImageUploadView
 )
 
@@ -18,6 +18,7 @@ urlpatterns = [
     path('cart/', CartView.as_view(), name='cart-detail'),
     path('calculate-selection/', CalculateSelectionView.as_view(), name='calculate-selection'),
     path('orders/create/', OrderCreateView.as_view(), name='order-create'),
+    path('orders/<int:id>/', OrderDetailView.as_view(), name='order-detail'), # <-- New Secure Endpoint
     path('articles/', ArticleListView.as_view(), name='article-list'),
     path('articles/<slug:slug>/', ArticleDetailView.as_view(), name='article-detail'),
     path('articles/<slug:slug>/increment-view/', ArticleIncrementViewCountView.as_view(), name='article-increment-view'),

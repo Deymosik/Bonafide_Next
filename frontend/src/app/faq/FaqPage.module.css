@@ -1,150 +1,221 @@
-/* frontend/src/pages/FaqPage.css */
-/* Переменные импортируются из глобального файла /src/styles/theme.css */
+/* frontend/src/app/faq/FaqPage.module.css */
 
+/* --- MAIN CONTAINER --- */
 .faq-page {
-    padding: 16px 16px 32px;
+    /* No padding here, we handle it inside containers */
+    width: 100%;
+    min-height: 100vh;
 }
 
-.faq-title {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0 0 24px 0;
-    color: var(--app-text-color);
-}
-
-/* --- КОНТЕЙНЕР ДЛЯ КНОПОК НАВИГАЦИИ (ЛИПКИЙ) --- */
-/* Был .info-tabs-section, стал .info-tabs-nav */
-.info-tabs-nav {
-    padding-top: 8px; /* Небольшой отступ сверху, чтобы не прилипало к краю экрана */
-    padding-bottom: 12px;
-    background-color: var(--app-bg-color);
-    /* Граница теперь отделяет кнопки от контента */
-    border-bottom: 1px solid var(--app-secondary-bg-color);
-    margin-bottom: 24px;
-}
-
-/* --- СЕГМЕНТИРОВАННЫЙ КОНТРОЛ --- */
-.segmented-control {
+/* --- RESPONSIVE LAYOUT --- */
+.page-container {
     display: flex;
-    background-color: var(--app-secondary-bg-color);
-    border-radius: 10px;
-    padding: 4px;
-    /* margin-bottom убрали, так как отступ теперь дает родительский .info-tabs-nav */
+    flex-direction: column;
+    padding: 0 16px 40px 16px;
+    max-width: 800px;
+    /* Optimal reading width centered */
+    margin: 0 auto;
 }
 
-.segment-button {
-    flex: 1;
-    padding: 8px 12px;
-    border: none;
-    background-color: transparent;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--app-hint-color);
-    cursor: pointer;
-    transition: all 0.3s ease;
+@media (min-width: 900px) {
+    .page-container {
+        padding: 0 24px 60px 24px;
+    }
 }
 
-.segment-button.active {
+/* --- UNIFIED STICKY NAVIGATION (Tabs) --- */
+.sticky-nav-container {
+    position: sticky;
+    top: 0;
+    /* Use global variable if available, else 0. 
+       We add 1px negative margin to overlap borders if any */
+    z-index: 100;
     background-color: var(--app-bg-color);
-    color: var(--app-text-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--app-separator-color);
+    margin-bottom: 32px;
+
+    /* Center nav on desktop */
+    display: flex;
+    justify-content: center;
 }
 
-/* --- КОНТЕЙНЕР ДЛЯ КОНТЕНТА ВКЛАДОК --- */
-.content-container {
-    position: relative;
-    min-height: 150px;
-    /* Важно: добавляем отступ снизу перед следующим блоком */
-    margin-bottom: 40px;
+@media (min-width: 900px) {
+    .sticky-nav-container {
+        padding: 16px 24px;
+        top: 0;
+        /* Or handle margin if there is a header */
+    }
 }
 
-.content-tab {
-    animation: fadeIn 0.4s ease-out;
-    /* Гарантируем, что блок растягивается по контенту */
-    height: auto;
-    overflow: visible;
+.nav-scroll-wrapper {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE 10+ */
+
+    /* Ensure interactive area is large enough */
+    padding: 4px;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+.nav-scroll-wrapper::-webkit-scrollbar {
+    display: none;
 }
 
-/* --- СТИЛИ ДЛЯ ИНФО-СЕКЦИЙ ВНУТРИ ВКЛАДОК --- */
-.info-section-content {
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--text-color-secondary);
-
-    /* ИСПРАВЛЕНИЕ ВЕРСТКИ ДЛЯ БОЛЬШОГО ТЕКСТА */
-    /* Заставляет длинные слова переноситься, чтобы не растягивать экран вширь */
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-    max-width: 100%;
-}
-
-.info-section-placeholder {
+.nav-tab {
+    padding: 10px 20px;
+    border-radius: 100px;
+    border: none;
+    background-color: var(--app-secondary-bg-color);
     color: var(--app-hint-color);
-    padding: 20px 0;
-    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    flex-shrink: 0;
 }
 
-.info-section-content :global(p) { margin: 0 0 1.2em 0; }
-.info-section-content :global(p:last-child) { margin-bottom: 0; }
-.info-section-content :global(ul), .info-section-content :global(ol) { padding-left: 20px; margin: 0 0 1.2em 0; }
+.nav-tab:hover {
+    background-color: var(--app-separator-color);
+    color: var(--app-text-color);
+}
+
+.nav-tab.active {
+    background-color: var(--app-text-color);
+    color: var(--app-bg-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* --- CONTENT AREA --- */
+.content-area {
+    width: 100%;
+    animation: slideUpFade 0.4s ease-out forwards;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.content-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.content-title {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: var(--app-text-color);
+    letter-spacing: -0.03em;
+}
+
+.content-subtitle {
+    font-size: 18px;
+    color: var(--app-hint-color);
+    line-height: 1.5;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* --- INFO SECTIONS --- */
+.info-section-content {
+    font-size: 17px;
+    /* Slightly larger for better reading */
+    line-height: 1.65;
+    color: var(--app-text-color);
+}
+
+.info-section-content :global(p) {
+    margin-bottom: 1.5em;
+}
+
+
 .info-section-content :global(a) {
     color: var(--app-link-color);
-    text-decoration: none;
     font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
-.info-section-content :global(a:hover) { text-decoration: underline; }
 
-/* --- ОБЩИЙ ЗАГОЛОВОК ДЛЯ СЕКЦИЙ --- */
-.info-section-title {
-    font-size: 20px;
+/* --- RESPONSIVE IMAGES IN CONTENT --- */
+.info-section-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    display: block;
+    margin: 24px 0;
+}
+
+.info-section-ph {
     text-align: center;
-    font-weight: 600;
-    margin: 0 0 16px 0;
-    color: var(--app-text-color);
+    padding: 60px 20px;
+    color: var(--app-hint-color);
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 20px;
 }
 
-/* --- КОНТЕЙНЕР ДЛЯ АККОРДЕОНА FAQ --- */
-.faq-accordion-section {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--app-secondary-bg-color);
-}
-
+/* --- FAQ LIST --- */
 .faq-list {
     display: flex;
     flex-direction: column;
 }
 
-/* --- БЛОК С КОНТАКТАМИ --- */
-.contacts-section {
-    /* Стили остаются прежними */
+/* --- GLOBAL BOTTOM CONTACT BLOCK --- */
+.bottom-contact-block {
+    margin-top: 60px;
+    padding: 32px 24px;
+    background-color: var(--app-secondary-bg-color);
+    border-radius: 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.contacts-content p {
-    font-size: 15px;
+.contact-block-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--app-text-color);
+}
+
+.contact-block-text {
+    font-size: 16px;
     color: var(--app-hint-color);
-    line-height: 1.5;
-    margin: 0 0 16px 0;
-    text-align: center;
+    margin-bottom: 24px;
+    max-width: 400px;
 }
 
 .contact-button {
-    display: block;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: 600;
-    text-align: center;
-    text-decoration: none;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    padding: 14px 32px;
     background-color: var(--app-button-color);
     color: var(--app-button-text-color);
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.contact-button:hover {
+    opacity: 0.9;
+}
+
+.contact-button:active {
+    transform: scale(0.96);
 }
