@@ -16,7 +16,8 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
     /* Limit height on mobile to keep it compact */
-    min-height: 140px;
+    /* Limit height on mobile to keep it compact */
+    min-height: 115px;
 }
 
 .deal-container:hover {
@@ -40,13 +41,13 @@
 /* Badge on Image */
 .deal-discount-badge {
     position: absolute;
-    top: 8px;
-    left: 8px;
+    top: 6px;
+    left: 6px;
     background-color: var(--app-destructive-text-color);
     color: #fff;
-    padding: 4px 8px;
-    border-radius: 8px;
-    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 700;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     z-index: 2;
@@ -54,12 +55,12 @@
 
 /* --- Content Section --- */
 .deal-info {
-    padding: 16px;
+    padding: 10px 12px;
     /* Compact padding for mobile */
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 8px;
+    gap: 4px;
     /* Compact gap */
 }
 
@@ -70,19 +71,19 @@
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 2px;
+    margin-bottom: 0px;
 }
 
 .deal-name {
-    font-size: 16px;
+    font-size: 14px;
     /* Smaller font for mobile horizontal */
     font-weight: 700;
     margin: 0;
-    line-height: 1.25;
+    line-height: 1.2;
     /* Limit to 2 lines */
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -95,19 +96,19 @@
 .deal-price-wrapper {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    margin-top: 2px;
+    gap: 6px;
+    margin-top: 0px;
 }
 
 .deal-new-price {
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 800;
     color: var(--app-text-color);
     letter-spacing: -0.5px;
 }
 
 .deal-old-price {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--app-hint-color);
     text-decoration: line-through;
@@ -116,9 +117,9 @@
 /* --- Countdown Timer --- */
 .deal-countdown {
     display: flex;
-    gap: 12px;
-    margin-top: 8px;
-    padding-top: 8px;
+    gap: 10px;
+    margin-top: 4px;
+    padding-top: 4px;
     border-top: 1px solid var(--app-separator-color, rgba(0, 0, 0, 0.05));
     /* On very small screens, ensure it fits */
 }
@@ -130,7 +131,7 @@
 }
 
 .countdown-value {
-    font-size: 16px;
+    font-size: 13px;
     /* Compact timer */
     font-weight: 700;
     font-variant-numeric: tabular-nums;

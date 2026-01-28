@@ -126,7 +126,8 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
+    /* Reduced from 16px for tighter spacing */
     cursor: pointer;
     font-size: 13px;
     color: var(--app-hint-color);
@@ -145,8 +146,8 @@
 
 /* --- Color Swatches --- */
 .color-swatches-section {
-    margin-top: 16px;
-    margin-bottom: 16px;
+    margin-top: 12px;
+    margin-bottom: 12px;
 }
 
 .color-swatches-container {
@@ -193,8 +194,11 @@
     display: flex;
     align-items: baseline;
     gap: 12px;
-    margin-top: 24px;
-    padding-top: 20px;
+    gap: 12px;
+    margin-top: 12px;
+    /* Reduced from 24px */
+    padding-top: 16px;
+    /* Reduced from 20px */
     border-top: 1px solid var(--app-separator-color);
 }
 

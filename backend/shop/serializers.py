@@ -527,6 +527,8 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     Возвращает безопасный набор полей.
     """
     items = OrderItemDetailSerializer(many=True, read_only=True)
+    full_name = serializers.SerializerMethodField()
+    shipping_address = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
@@ -534,5 +536,18 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             'id', 'status', 'created_at', 
             'subtotal', 'discount_amount', 'final_total', 
             'delivery_method', 'city', 'street', 'cdek_office_address',
-            'items'
+            'items', 'phone', 'full_name', 'shipping_address'
         )
+
+    def get_full_name(self, obj):
+        parts = [obj.first_name, obj.last_name]
+        return " ".join(filter(None, parts))
+
+    def get_shipping_address(self, obj):
+        if obj.delivery_method == 'cdek':
+             return f"СДЭК: {obj.cdek_office_address}" if obj.cdek_office_address else "Пункт выдачи СДЭК"
+        
+        # Courier/Postal address
+        parts = [obj.postcode, obj.city, obj.street, obj.house, obj.apartment]
+        address = ", ".join(filter(None, parts))
+        return address if address else "Адрес не указан"

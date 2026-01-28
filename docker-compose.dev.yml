@@ -103,7 +103,8 @@ services:
     working_dir: /app
     ports:
       - "3000:3000"
-    command: npm run dev
+    tty: true
+    command: [ "/bin/sh", "/app/dev-entrypoint.sh" ]
     volumes:
       # Монтируем исходный код
       - ./frontend:/app

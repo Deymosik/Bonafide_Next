@@ -11,8 +11,8 @@
     --color-separator: #38383a;
 
     /* Override specific atoms that don't have semantic mapping yet */
-    --app-link-color: #0a84ff;
-    --link-color: #0a84ff;
+    /* --app-link-color: #0a84ff; REMOVED: Use global variable */
+    /* --link-color: #0a84ff; */
 
     /* CRITICAL FIX: Re-bind Legacy Aliases to local scope variables */
     /* Since legacy aliases are defined in :root, they don't auto-update when --color-bg-base changes locally. */
@@ -251,7 +251,6 @@
 }
 
 .article-content :global(a) {
-    color: var(--app-link-color);
     text-decoration: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;

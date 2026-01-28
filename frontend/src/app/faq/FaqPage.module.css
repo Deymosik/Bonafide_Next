@@ -30,10 +30,13 @@
     /* Use global variable if available, else 0. 
        We add 1px negative margin to overlap borders if any */
     z-index: 100;
-    background-color: var(--app-bg-color);
+    margin-bottom: 32px;
     padding: 12px 16px;
     border-bottom: 1px solid var(--app-separator-color);
-    margin-bottom: 32px;
+    /* Modern Blur Effect */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: color-mix(in srgb, var(--app-bg-color), transparent 5%);
 
     /* Center nav on desktop */
     display: flex;

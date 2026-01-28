@@ -12,28 +12,50 @@
     z-index: 2147483647;
     /* Max z-index to be absolutely sure */
     display: flex;
-    align-items: center;
+    align-items: flex-end;
+    /* Align to bottom on mobile by default */
     justify-content: center;
     animation: shareModalFadeIn 0.3s ease-out both;
+}
+
+@media (min-width: 600px) {
+    .share-modal-overlay {
+        align-items: center;
+        /* Center on desktop */
+    }
 }
 
 .share-modal-content {
     background-color: var(--app-bg-color);
     /* Matches theme */
-    border-radius: 24px;
-    padding: 24px;
-    width: 90%;
-    max-width: 380px;
+    border-radius: 24px 24px 0 0;
+    /* Rounded top only for bottom sheet */
+    padding: 24px 24px 40px 24px;
+    /* Extra bottom padding for safe area */
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     position: relative;
-    box-shadow:
-        0 20px 48px -12px rgba(0, 0, 0, 0.16),
-        0 0 0 1px rgba(0, 0, 0, 0.04);
-    /* Subtle border ring */
-    transform: scale(0.96);
-    animation: shareModalScaleIn 0.4s cubic-bezier(0.19, 1, 0.22, 1) both;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+
+    transform: translateY(100%);
+    animation: shareModalSlideUp 0.3s cubic-bezier(0.19, 1, 0.22, 1) both;
     /* Clean overflow for rounded corners */
     overflow: hidden;
     will-change: transform;
+}
+
+@media (min-width: 600px) {
+    .share-modal-content {
+        border-radius: 24px;
+        /* Full rounded on desktop */
+        width: 90%;
+        max-width: 380px;
+        padding: 24px;
+        box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.16);
+        transform: scale(0.96);
+        animation: shareModalScaleIn 0.4s cubic-bezier(0.19, 1, 0.22, 1) both;
+    }
 }
 
 /* Header */
@@ -145,13 +167,25 @@
     }
 }
 
+@keyframes shareModalSlideUp {
+    0% {
+        transform: translateY(100%);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
 @keyframes shareModalScaleIn {
     0% {
         transform: scale(0.92);
+        opacity: 0;
     }
 
     100% {
         transform: scale(1);
+        opacity: 1;
     }
 }
 

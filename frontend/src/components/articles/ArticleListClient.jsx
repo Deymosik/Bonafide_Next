@@ -124,7 +124,7 @@ const ArticleListClient = ({ initialArticles, initialCategories, initialNextPage
                 ) : (
                     <p className={styles['not-found-message']}>Статьи не найдены.</p>
                 )}
-                {loadingMore && <p style={{ textAlign: 'center', color: '#888' }}>Загружаем ещё...</p>}
+                {loadingMore && <p style={{ textAlign: 'center', color: 'var(--app-hint-color)' }}>Загружаем ещё...</p>}
             </div>
         </div>
     );

@@ -23,7 +23,7 @@
     /* Transition for hover effects */
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
     /* Border for slight definition on light themes */
-    border: 1px solid rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--app-separator-color);
 }
 
 .article-card-link:hover .article-card {
@@ -39,6 +39,7 @@
     /* 16:9 Aspect Ratio is standard and looks cinematic */
     padding-top: 56.25%;
     /* 16:9 */
+    position: relative;
     position: relative;
     background-color: var(--app-separator-color);
     overflow: hidden;
@@ -78,7 +79,8 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--app-button-color);
-    background: rgba(var(--app-button-color-rgb), 0.1);
+    color: var(--app-button-color);
+    background: color-mix(in srgb, var(--app-button-color), transparent 90%);
     /* Assuming variable setup, else simple color */
     /* Fallback if RGB var not set, just text color is fine too, keeping it clean */
     padding: 0;
@@ -145,14 +147,5 @@
     /* Amber 500 */
 }
 
-/* Dark Mode Tweaks */
-@media (prefers-color-scheme: dark) {
-    .article-card {
-        border-color: rgba(255, 255, 255, 0.05);
-    }
-
-    .article-card-featured-badge {
-        background: rgba(40, 40, 40, 0.9);
-        color: white;
-    }
-}
+/* Dark Mode Tweaks - REMOVED: Rely on Variables */
+/* The variables --app-secondary-bg-color etc. handle this automatically */

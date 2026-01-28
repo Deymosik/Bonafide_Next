@@ -28,6 +28,8 @@ from .models import (
     Feature, CharacteristicCategory, Characteristic, ProductCharacteristic, Cart,
     CartItem, Order, OrderItem, ArticleCategory, Article, Backup
 )
+from tinymce.models import HTMLField
+from tinymce.widgets import TinyMCE
 
 class MultipleFileInput(forms.FileInput):
     """
@@ -113,6 +115,11 @@ class ProductAdminForm(forms.ModelForm):
 class ProductAdmin(ModelAdmin):
     # 3. ИЗМЕНЕНИЕ: Подключаем нашу кастомную форму
     form = ProductAdminForm
+    
+    # Force TinyMCE widget
+    formfield_overrides = {
+        HTMLField: {'widget': TinyMCE(attrs={'cols': 80, 'rows': 30})},
+    }
 
     # ВАЖНО: availability_status должен быть в list_display, чтобы работать в list_editable
     list_display = ('name', 'sku', 'category', 'regular_price', 'is_active', 'availability_status', 'stock_quantity', 'Display_availability_badge')
@@ -398,6 +405,11 @@ class DiscountRuleAdmin(ModelAdmin):
 class ShopSettingsAdmin(ModelAdmin):
     inlines = [ShopImageInline]
     
+    # Force TinyMCE widget
+    formfield_overrides = {
+        HTMLField: {'widget': TinyMCE(attrs={'cols': 80, 'rows': 30})},
+    }
+    
     class Media:
         css = {
             'all': ('shop/css/admin_custom.css',)
@@ -461,6 +473,10 @@ class ShopSettingsAdmin(ModelAdmin):
 
 @admin.register(FaqItem)
 class FaqItemAdmin(ModelAdmin):
+    # Force TinyMCE widget
+    formfield_overrides = {
+        HTMLField: {'widget': TinyMCE(attrs={'cols': 80, 'rows': 30})},
+    }
     list_display = ('question', 'order', 'is_active')
     list_editable = ('order', 'is_active')
     search_fields = ('question', 'answer')
@@ -639,6 +655,10 @@ class ArticleCategoryAdmin(ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(ModelAdmin):
+    # Force TinyMCE widget
+    formfield_overrides = {
+        HTMLField: {'widget': TinyMCE(attrs={'cols': 80, 'rows': 30})},
+    }
     # 1. ИЗМЕНЕНИЕ: Добавляем 'is_featured' и 'views_count' в список для удобства
     list_display = ('title', 'category', 'status', 'is_featured', 'views_count', 'published_at')
     list_filter = (

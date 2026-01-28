@@ -27,8 +27,8 @@
     /* Blur effect for modern feel */
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    background-color: rgba(var(--app-bg-color-rgb), 0.95);
-    /* Assuming RGB vars exist, else fallback to hex/var */
+    /* Use solid color or color-mix for transparency if supported, but solid is safer for Telegram vars */
+    background-color: var(--app-bg-color);
 }
 
 .categories-scroll-container {
