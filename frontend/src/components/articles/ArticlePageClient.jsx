@@ -13,7 +13,7 @@ import apiClient from '@/lib/api';
 import { useSettings } from '@/context/SettingsContext';
 // 2. Импортируем хук Telegram
 import { useTelegram } from '@/utils/telegram';
-import RelatedProductCard from '@/components/products/RelatedProductCard';
+import ProductCard from '@/components/products/ProductCard';
 
 import SunIcon from '@/assets/sun-icon.svg';
 import MoonIcon from '@/assets/moon-icon.svg';
@@ -163,7 +163,9 @@ const ArticlePageClient = ({ article }) => {
                         <div className={styles['related-products-grid']}>
                             {article.related_products.map(product => (
                                 <div key={product.id} className={styles['product-card-wrapper']}>
-                                    <RelatedProductCard product={product} />
+                                    <Link href={`/products/${product.slug}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+                                        <ProductCard product={product} />
+                                    </Link>
                                 </div>
                             ))}
                         </div>

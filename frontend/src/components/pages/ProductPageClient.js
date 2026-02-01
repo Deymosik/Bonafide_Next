@@ -96,7 +96,7 @@ export default function ProductPageClient({ product }) {
         // Сравниваем slug, а не ID
         if (newSlug !== product.slug && !isSwitchingColor) {
             setIsSwitchingColor(true);
-            router.push(`/products/${newSlug}`); // <--- Переход по SLUG
+            router.replace(`/products/${newSlug}`); // <--- Переход по SLUG
         }
     };
 
@@ -207,6 +207,7 @@ export default function ProductPageClient({ product }) {
                                             <Link
                                                 href={`/products/${variation.slug}`}
                                                 key={variation.id}
+                                                replace
                                                 className={`${styles['color-swatch']} ${variation.id === product.id ? styles['active'] : ''}`}
                                                 onClick={(e) => handleColorSwitch(e, variation.slug)}
                                                 style={{ position: 'relative' }}

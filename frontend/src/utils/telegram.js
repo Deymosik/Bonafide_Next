@@ -12,8 +12,20 @@ export const useTelegram = () => {
     useEffect(() => {
         if (tg) {
             tg.ready();
-            // Пытаемся развернуть, но не блокируем, если не выйдет
-            try { tg.expand(); } catch (e) { }
+
+            // 1. Принудительно разворачиваем
+            try { tg.expand(); } catch (e) { console.error('Error expanding WebApp:', e); }
+
+            // 2. Запрещаем вертикальные свайпы (для версии 7.7+)
+            if (tg.disableVerticalSwipes) {
+                try { tg.disableVerticalSwipes(); } catch (e) { console.error('Error disabling vertical swipes:', e); }
+            }
+
+            // 3. Включаем подтверждение закрытия
+            if (tg.enableClosingConfirmation) {
+                try { tg.enableClosingConfirmation(); } catch (e) { console.error('Error enabling closing confirmation:', e); }
+            }
+
             setIsReady(true);
         }
     }, [tg]);

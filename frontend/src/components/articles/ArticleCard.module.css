@@ -74,16 +74,18 @@
 .article-card-category {
     display: inline-block;
     margin: 0 0 8px 0;
+    align-self: flex-start;
+    /* Prevents stretching to full width */
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--app-button-color);
-    color: var(--app-button-color);
     background: color-mix(in srgb, var(--app-button-color), transparent 90%);
-    /* Assuming variable setup, else simple color */
-    /* Fallback if RGB var not set, just text color is fine too, keeping it clean */
-    padding: 0;
+    padding: 4px 8px;
+    /* Added padding for badge look */
+    border-radius: 6px;
+    /* Rounded corners */
 }
 
 /* Title */

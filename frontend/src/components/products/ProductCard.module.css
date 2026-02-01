@@ -10,6 +10,7 @@
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.2s ease;
+    height: 100%;
 }
 
 .product-card:active {
@@ -51,6 +52,7 @@
     /* Ограничиваем текст двумя строками */
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;

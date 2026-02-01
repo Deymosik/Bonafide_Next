@@ -150,5 +150,28 @@ docker compose logs -f frontend  # Только фронтенд
 Добавьте задачу в cron на хосте (напишите `crontab -e`):
 ```bash
 0 3 * * * docker compose run --rm certbot renew --quiet && docker compose restart nginx
-```
-Это будет пытаться обновлять сертификаты каждую ночь и перезагружать Nginx.
+
+## ❓ 6. Устранение неполадок (Troubleshooting)
+
+### Ошибка `TLS handshake timeout` при сборке
+Если вы видите ошибку:
+`failed to do request: Head "https://registry-1.docker.io/...": net/http: TLS handshake timeout`
+
+Это означает, что сервер не может соединиться с Docker Hub (часто бывает в РФ или при нестабильном интернете).
+
+**Решения:**
+1.  **Повторите команду**. Часто это временный сбой.
+2.  **Перезапустите Docker**: `sudo systemctl restart docker` и попробуйте снова.
+3.  **Используйте зеркало (Mirror)**:
+    Редактируйте конфиг Docker:
+    ```bash
+    sudo nano /etc/docker/daemon.json
+    ```
+    Добавьте (или создайте) секцию:
+    ```json
+    {
+      "registry-mirrors": ["https://mirror.gcr.io"]
+    }
+    ```
+    Затем перезапустите: `sudo systemctl restart docker`.
+

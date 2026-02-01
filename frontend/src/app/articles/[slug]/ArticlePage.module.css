@@ -311,6 +311,8 @@
 
 .product-card-wrapper {
     flex-shrink: 0;
+    width: 220px;
+    /* Fixed width for uniform look on mobile */
 }
 
 /* --- АДАПТАЦИЯ ПОД PC (Tablet & Desktop) --- */
