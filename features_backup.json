@@ -1,0 +1,20 @@
+[
+{
+  "model": "shop.feature",
+  "pk": 1,
+  "fields": {
+    "product": 8,
+    "name": "Ваууууу",
+    "order": 0
+  }
+},
+{
+  "model": "shop.feature",
+  "pk": 2,
+  "fields": {
+    "product": 8,
+    "name": "AirPods Pro 2 Huilian 247B (копия)",
+    "order": 0
+  }
+}
+]

@@ -4,31 +4,12 @@ from django.contrib.auth.models import User
 from .models import (
     InfoPanel, Category, Product, ProductImage, PromoBanner,
     ProductInfoCard, ColorGroup, ShopSettings, FaqItem, ShopImage,
-    Feature, CharacteristicCategory, Characteristic,
+    InfoPanel, Category, Product, ProductImage, PromoBanner,
+    ProductInfoCard, ColorGroup, ShopSettings, FaqItem, ShopImage,
+    Feature, CharacteristicSection, Characteristic,
     ProductCharacteristic, Cart, CartItem, Order, OrderItem, Article, ArticleCategory
 )
 
-
-class FeatureSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Feature
-        fields = ('name',)
-
-class ProductCharacteristicSerializer(serializers.ModelSerializer):
-    # Получаем строковое представление характеристики (например, "Вес")
-    name = serializers.CharField(source='characteristic.name')
-
-    class Meta:
-        model = ProductCharacteristic
-        fields = ('name', 'value')
-
-class CharacteristicCategorySerializer(serializers.ModelSerializer):
-    # Вкладываем все характеристики, относящиеся к этой категории
-    characteristics = ProductCharacteristicSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = CharacteristicCategory
-        fields = ('name', 'characteristics')
 
 # --- 1. НОВЫЙ БАЗОВЫЙ КЛАСС ДЛЯ РЕФАКТОРИНГА ---
 class ImageUrlBuilderSerializer(serializers.ModelSerializer):
@@ -41,6 +22,55 @@ class ImageUrlBuilderSerializer(serializers.ModelSerializer):
         if request and file_field and hasattr(file_field, 'url'):
             return request.build_absolute_uri(file_field.url)
         return None
+class FeatureSerializer(ImageUrlBuilderSerializer):
+    icon_url = serializers.SerializerMethodField()
+    description = serializers.CharField(source='feature_definition.description', read_only=True)
+    
+    class Meta:
+        model = Feature
+        fields = ('name', 'icon_url', 'description')
+
+    def get_icon_url(self, obj):
+        # Если связано с определением и у него есть иконка
+        if obj.feature_definition and obj.feature_definition.icon:
+             return self._get_absolute_url(obj.feature_definition.icon)
+        return None
+
+    def to_representation(self, instance):
+        """
+        Кастомное представление:
+        - Имя берем либо из instance.name (если задано), либо из instance.feature_definition.name
+        """
+        data = super().to_representation(instance)
+        
+        # Логика "умного" имени
+        if instance.name:
+            data['name'] = instance.name
+        elif instance.feature_definition:
+            data['name'] = instance.feature_definition.name
+        else:
+             data['name'] = "Без названия"
+
+        return data
+
+
+class ProductCharacteristicSerializer(serializers.ModelSerializer):
+    # Получаем строковое представление характеристики (например, "Вес")
+    name = serializers.CharField(source='characteristic.name')
+
+    class Meta:
+        model = ProductCharacteristic
+        fields = ('name', 'value')
+
+class CharacteristicSectionSerializer(serializers.ModelSerializer):
+    # Вкладываем все характеристики, относящиеся к этому разделу
+    characteristics = ProductCharacteristicSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = CharacteristicSection
+        fields = ('name', 'characteristics')
+
+
 
 
 # --- Вспомогательные сериализаторы ---
@@ -215,24 +245,24 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         )
 
     def get_grouped_characteristics(self, obj):
-        # Получаем все характеристики товара, сразу подгружая связанные категории и названия
-        characteristics = obj.characteristics.select_related('characteristic__category').all()
+        # Получаем все характеристики товара, сразу подгружая связанные разделы и названия
+        characteristics = obj.characteristics.select_related('characteristic__section').all()
 
-        # Группируем их по категориям
+        # Группируем их по разделам
         grouped_data = {}
         for pc in characteristics:
-            category_name = pc.characteristic.category.name
-            if category_name not in grouped_data:
-                grouped_data[category_name] = []
-            grouped_data[category_name].append(
+            section_name = pc.characteristic.section.name
+            if section_name not in grouped_data:
+                grouped_data[section_name] = []
+            grouped_data[section_name].append(
                 ProductCharacteristicSerializer(pc).data
             )
 
         # Преобразуем в список для сериализатора
         # [{ 'name': 'Основные', 'characteristics': [...] }, { ... }]
         result = [
-            {'name': cat_name, 'characteristics': items}
-            for cat_name, items in grouped_data.items()
+            {'name': sec_name, 'characteristics': items}
+            for sec_name, items in grouped_data.items()
         ]
         return result
 

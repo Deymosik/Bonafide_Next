@@ -57,10 +57,62 @@ class ColorGroup(models.Model):
         verbose_name_plural = "Группы цветов"
 
 
+
+class FeatureDefinition(models.Model):
+    """
+    Справочник особенностей (маркетинговых фишек).
+    Например: 'FaceID', 'NFC', 'Беспроводная зарядка'.
+    Содержит иконку и базовое описание.
+    """
+    name = models.CharField("Название особенности", max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
+    icon = models.FileField(
+        "Иконка (SVG/PNG)", 
+        upload_to='features/icons/', 
+        null=True, 
+        blank=True,
+        help_text="Рекомендуется SVG для лучшего качества."
+    )
+    description = models.TextField("Описание (для подсказок)", blank=True)
+
+    class Meta:
+        verbose_name = "Справочник особенностей"
+        verbose_name_plural = "Справочник особенностей"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
 class Feature(models.Model):
-    """Модель для описания Функционала (особенностей) товара."""
+    """
+    Привязка особенности к товару.
+    Можно переопределить название (например 'Быстрая зарядка' -> 'Быстрая зарядка 68 Вт').
+    """
     product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='features')
-    name = models.CharField("Название особенности", max_length=200)
+    
+    # Ссылка на справочник (пока nullable, чтобы миграция прошла, потом заполним данными)
+    feature_definition = models.ForeignKey(
+        FeatureDefinition, 
+        on_delete=models.CASCADE, 
+        related_name='product_links',
+        verbose_name="Особенность из справочника",
+        null=True,
+        blank=True
+    )
+    
+    name = models.CharField(
+        "Переопределение названия", 
+        max_length=200, 
+        blank=True, 
+        help_text="Оставьте пустым, чтобы использовать название из справочника. ИЛИ напишите свое уточнение (напр. 'Быстрая зарядка 65W')"
+    )
+    
     order = models.PositiveIntegerField("Порядок", default=0)
 
     class Meta:
@@ -69,16 +121,22 @@ class Feature(models.Model):
         ordering = ['order']
 
     def __str__(self):
-        return self.name
+        # Если есть переопределение - показываем его, иначе из справочника
+        if self.name:
+            return self.name
+        if self.feature_definition:
+            return self.feature_definition.name
+        return "Неизвестная особенность"
 
-class CharacteristicCategory(models.Model):
-    """Категория для группировки характеристик (например, 'Основные', 'Габариты')."""
-    name = models.CharField("Название категории", max_length=100, unique=True)
+
+class CharacteristicSection(models.Model):
+    """Категория (Раздел) для группировки характеристик (например, 'Основные', 'Габариты')."""
+    name = models.CharField("Название раздела", max_length=100, unique=True)
     order = models.PositiveIntegerField("Порядок", default=0)
 
     class Meta:
-        verbose_name = "Категория характеристики"
-        verbose_name_plural = "Категории характеристик"
+        verbose_name = "Раздел характеристик"
+        verbose_name_plural = "Разделы характеристик"
         ordering = ['order']
 
     def __str__(self):
@@ -87,15 +145,15 @@ class CharacteristicCategory(models.Model):
 class Characteristic(models.Model):
     """Справочник всех возможных названий характеристик (Вес, Цвет, Материал)."""
     name = models.CharField("Название характеристики", max_length=100, unique=True)
-    category = models.ForeignKey(CharacteristicCategory, on_delete=models.CASCADE, related_name='characteristics')
+    section = models.ForeignKey(CharacteristicSection, on_delete=models.CASCADE, related_name='characteristics', verbose_name="Раздел")
 
     class Meta:
         verbose_name = "Характеристика (справочник)"
         verbose_name_plural = "Характеристики (справочник)"
-        ordering = ['category__order', 'name']
+        ordering = ['section__order', 'name']
 
     def __str__(self):
-        return f"{self.category.name} - {self.name}"
+        return f"{self.section.name} - {self.name}"
 
 class ProductCharacteristic(models.Model):
     """Связь конкретного товара с характеристикой и ее значением."""
@@ -111,6 +169,24 @@ class ProductCharacteristic(models.Model):
 
     def __str__(self):
         return f"{self.product.name}: {self.characteristic.name} = {self.value}"
+
+
+# --- НОВАЯ МОДЕЛЬ (Refactoring) ---
+class CharacteristicGroup(models.Model):
+    """
+    Шаблон характеристик (например, 'Смартфоны', 'Ноутбуки').
+    Позволяет группировать характеристики для удобного заполнения в админке.
+    """
+    name = models.CharField("Название группы", max_length=100)
+    characteristics = models.ManyToManyField(Characteristic, related_name='groups', verbose_name="Характеристики в группе")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Шаблон характеристик"
+        verbose_name_plural = "Шаблоны характеристик"
+
 
 
 # --- Модель Product (С КЛЮЧЕВЫМИ ИЗМЕНЕНИЯМИ) ---
@@ -200,6 +276,9 @@ class Product(models.Model):
     # ------------------------------------
 
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products", verbose_name="Категория")
+    # Новое поле для рефакторинга
+    characteristic_group = models.ForeignKey(CharacteristicGroup, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Шаблон характеристик")
+    
     info_panels = models.ManyToManyField(InfoPanel, blank=True, verbose_name="Информационные панельки")
     is_active = models.BooleanField("Активен", default=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)

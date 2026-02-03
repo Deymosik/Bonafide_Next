@@ -1,4 +1,3 @@
-// src/components/ProductPageClient.jsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -9,6 +8,7 @@ import DOMPurify from 'isomorphic-dompurify';
 
 import { useSettings } from '@/context/SettingsContext';
 import ProductGallery from '@/components/products/ProductGallery';
+import ProductFeatures from '@/components/products/ProductFeatures';
 import ShareButton from '@/components/ui/ShareButton';
 import { useTelegram } from '@/utils/telegram';
 import RelatedProductCard from '@/components/products/RelatedProductCard';
@@ -314,13 +314,9 @@ export default function ProductPageClient({ product }) {
                         )}
 
                         <div className={styles['product-section']}>
-                            {product.features && product.features.length > 0 && (
-                                <AccordionItem title="Функционал">
-                                    <ul className={`${styles['spec-list']} ${styles['simple']}`}>
-                                        {product.features.map((feature, index) => <li key={index}>{feature.name}</li>)}
-                                    </ul>
-                                </AccordionItem>
-                            )}
+                            {/* --- FEATURES COMPONENT --- */}
+                            <ProductFeatures features={product.features} />
+
                             {product.grouped_characteristics && product.grouped_characteristics.map((category, index) => (
                                 <AccordionItem title={category.name} key={index}>
                                     <ul className={styles['spec-list']}>

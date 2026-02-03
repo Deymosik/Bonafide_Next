@@ -391,18 +391,35 @@ UNFOLD = {
                         "icon": "palette",
                         "link": reverse_lazy("admin:shop_colorgroup_changelist"),
                     },
+                ],
+            },
+            {
+                "title": _("Характеристики и функции"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
                     {
-                        "title": _("Характеристики"),
+                        "title": _("1. Разделы характеристик"),
+                        "icon": "folder_open",
+                        "link": reverse_lazy("admin:shop_characteristicsection_changelist"),
+                    },
+                    {
+                        "title": _("2. Справочник характеристик"),
                         "icon": "list",
                         "link": reverse_lazy("admin:shop_characteristic_changelist"),
                     },
                     {
-                        "title": _("Категории характеристик"),
-                        "icon": "folder_open",
-                        "link": reverse_lazy("admin:shop_characteristiccategory_changelist"),
+                        "title": _("3. Шаблоны (Группы)"),
+                        "icon": "auto_awesome_motion",
+                        "link": reverse_lazy("admin:shop_characteristicgroup_changelist"),
                     },
                     {
-                        "title": _("Фичи (Особенности)"),
+                        "title": _("4. Справочник особенностей"),
+                        "icon": "stars",
+                        "link": reverse_lazy("admin:shop_featuredefinition_changelist"),
+                    },
+                    {
+                        "title": _("5. Особенности в товарах (Список)"),
                         "icon": "verified",
                         "link": reverse_lazy("admin:shop_feature_changelist"),
                     },

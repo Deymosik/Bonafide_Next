@@ -25,10 +25,14 @@ from django.db import transaction
 from .models import (
     InfoPanel, Category, Product, ProductImage, PromoBanner, ProductInfoCard,
     DiscountRule, ColorGroup, ShopSettings, FaqItem, ShopImage,
-    Feature, CharacteristicCategory, Characteristic, ProductCharacteristic, Cart,
-    CartItem, Order, OrderItem, ArticleCategory, Article, Backup
+    Feature, CharacteristicSection, Characteristic, ProductCharacteristic, Cart,
+
+    CartItem, Order, OrderItem, ArticleCategory, Article, Backup, CharacteristicGroup,
+    FeatureDefinition
 )
+from .admin_forms import ProductAdminForm, CharacteristicsWidget
 from tinymce.models import HTMLField
+
 from tinymce.widgets import TinyMCE
 
 class MultipleFileInput(forms.FileInput):
@@ -45,18 +49,43 @@ class MultipleFileInput(forms.FileInput):
             self.attrs = {}
 
 # --- Все классы Inline остаются без изменений ---
+class FeatureDefinitionAdmin(ModelAdmin):
+    list_display = ('name', 'icon', 'display_icon', 'slug')
+    search_fields = ('name',)
+    list_editable = ('icon',)
+    
+    def display_icon(self, obj):
+        if obj.icon:
+            return format_html('<img src="{}" width="30" height="30" style="object-fit:cover; border-radius: 4px;" />', obj.icon.url)
+        return "—"
+    display_icon.short_description = "Превью"
+
+admin.site.register(FeatureDefinition, FeatureDefinitionAdmin)
+
+@admin.register(Feature)
+class FeatureAdmin(ModelAdmin):
+    list_display = ('product', 'feature_definition', 'name', 'order')
+    search_fields = ('name', 'product__name', 'feature_definition__name')
+    list_filter = ('product', 'feature_definition')
+    autocomplete_fields = ['feature_definition', 'product']
+
+
 class FeatureInline(TabularInline):
     model = Feature
     extra = 1
     verbose_name = "Особенность (функционал)"
     verbose_name_plural = "Особенности (функционал)"
-    fields = ('name', 'order')
+    fields = ('feature_definition', 'name', 'order')
+    autocomplete_fields = ['feature_definition']
 
-@admin.register(Feature)
-class FeatureAdmin(ModelAdmin):
-    list_display = ('product', 'name', 'order')
-    search_fields = ('name', 'product__name')
-    list_filter = ('product',)
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        # Подсказка для менеджера
+        formset.form.base_fields['name'].widget.attrs.update({
+             'placeholder': 'Уточнение (необязательно)'
+        })
+        return formset
+
 
 
 class ProductCharacteristicInline(TabularInline):
@@ -96,9 +125,11 @@ class ShopImageInline(TabularInline):
     fields = ('image', 'caption', 'order')
 
 
-# 2. ИЗМЕНЕНИЕ: Создаем специальную форму для админки Product
-class ProductAdminForm(forms.ModelForm):
-    """Кастомная форма для модели Product."""
+# 2. ИЗМЕНЕНИЕ: (Обновлено) Наследуемся от формы из admin_forms.py
+class ProductAdminFormWithImages(ProductAdminForm):
+    """
+    Расширяем нашу форму с характеристиками, добавляя загрузку картинок.
+    """
     additional_images = forms.FileField(
         label='Загрузить дополнительные фото (пачкой)',
         # 3. ИЗМЕНЕНИЕ: Используем наш новый кастомный виджет
@@ -106,15 +137,13 @@ class ProductAdminForm(forms.ModelForm):
         required=False
     )
 
-    class Meta:
-        model = Product
-        fields = '__all__'
 
 
 @admin.register(Product)
 class ProductAdmin(ModelAdmin):
     # 3. ИЗМЕНЕНИЕ: Подключаем нашу кастомную форму
-    form = ProductAdminForm
+    form = ProductAdminFormWithImages
+
     
     # Force TinyMCE widget
     formfield_overrides = {
@@ -138,15 +167,21 @@ class ProductAdmin(ModelAdmin):
 
     inlines = [
         FeatureInline,
-        ProductCharacteristicInline,
+        # ProductCharacteristicInline, # Убираем стандартный инлайн, так как теперь есть удобный виджет
         ProductInfoCardInline,
         ProductImageInline,
     ]
 
+
     fieldsets = (
         ('Основная информация', {
             # --- ИЗМЕНЕНИЕ 2: Добавляем 'slug' в список отображаемых полей ---
-            'fields': ('name', 'slug', 'sku', 'color_group', 'category', 'regular_price', 'description', 'is_active')
+            'fields': ('name', 'slug', 'sku', 'category', 'characteristic_group', 'regular_price', 'description', 'is_active')
+        }),
+        ('Характеристики', {
+            'classes': ('tab',),
+            'description': "Выберите 'Шаблон характеристик' выше и сохраните товар, чтобы появились поля.",
+            'fields': ('characteristics_editor',)
         }),
         ("Управление наличием (Склад)", {
             'classes': ('tab',), # Выделяем в отдельный таб или блок
@@ -169,11 +204,38 @@ class ProductAdmin(ModelAdmin):
     # 5. ИЗМЕНЕНИЕ: Переопределяем метод сохранения модели (оставляем без изменений)
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
+        
+        # 1. Сохранение картинок
         files = request.FILES.getlist('additional_images')
         if files:
             for f in files:
                 ProductImage.objects.create(product=obj, image=f)
             self.message_user(request, f"Успешно загружено {len(files)} дополнительных фотографий.", messages.SUCCESS)
+
+        # 2. Сохранение характеристик из нашего виджета
+        # Итерируемся по всем параметрам POST запроса
+        saved_chars_count = 0
+        for key, value in request.POST.items():
+            if key.startswith('characteristic_'):
+                try:
+                    char_id = int(key.split('_')[1])
+                    if value.strip(): # Если значение не пустое
+                        ProductCharacteristic.objects.update_or_create(
+                            product=obj,
+                            characteristic_id=char_id,
+                            defaults={'value': value.strip()}
+                        )
+                        saved_chars_count += 1
+                    else:
+                        # Если значение стерли - удаляем запись
+                        ProductCharacteristic.objects.filter(product=obj, characteristic_id=char_id).delete()
+                except ValueError:
+                    continue
+        
+        if saved_chars_count > 0:
+            # Не перетираем сообщение об изображениях, если оно было
+            pass 
+
 
     @admin.display(description='Товар дня?', boolean=True)
     def display_deal_status(self, obj):
@@ -339,16 +401,115 @@ class ColorGroupAdmin(ModelAdmin):
 class InfoPanelAdmin(ModelAdmin):
     list_display = ('name', 'color', 'text_color')
 
-@admin.register(CharacteristicCategory)
-class CharacteristicCategoryAdmin(ModelAdmin):
+@admin.register(CharacteristicSection)
+class CharacteristicSectionAdmin(ModelAdmin):
+    change_list_template = 'admin/shop/characteristicsection/change_list.html'
     list_display = ('name', 'order')
     list_editable = ('order',)
 
 @admin.register(Characteristic)
 class CharacteristicAdmin(ModelAdmin):
-    list_display = ('name', 'category')
-    list_filter = (('category', RelatedDropdownFilter),)
+    change_list_template = 'admin/shop/characteristic/change_list.html'
+    list_display = ('name', 'section')
+    list_filter = (('section', RelatedDropdownFilter),)
     search_fields = ('name',)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('import/', self.admin_site.admin_view(self.import_characteristics), name='shop_characteristic_import'),
+        ]
+        return custom_urls + urls
+
+    def import_characteristics(self, request):
+        from .admin_forms import ImportCharacteristicsForm
+        
+        if request.method == 'POST':
+            form = ImportCharacteristicsForm(request.POST, request.FILES)
+            if form.is_valid():
+                json_data = None
+                # 1. Пытаемся получить JSON из текста
+                if form.cleaned_data['json_text']:
+                    try:
+                        json_data = json.loads(form.cleaned_data['json_text'])
+                    except json.JSONDecodeError as e:
+                        messages.error(request, f"Ошибка в JSON тексте: {e}")
+                        return render(request, 'admin/shop/characteristic/import_form.html', {'form': form, 'title': 'Импорт характеристик'})
+
+                # 2. Если текста нет, берем из файла
+                elif form.cleaned_data['json_file']:
+                    try:
+                        json_file = form.cleaned_data['json_file']
+                        json_data = json.load(json_file)
+                    except json.JSONDecodeError as e:
+                        messages.error(request, f"Ошибка в JSON файле: {e}")
+                        return render(request, 'admin/shop/characteristic/import_form.html', {'form': form, 'title': 'Импорт характеристик'})
+                    except Exception as e:
+                         messages.error(request, f"Ошибка чтения файла: {e}")
+                         return render(request, 'admin/shop/characteristic/import_form.html', {'form': form, 'title': 'Импорт характеристик'})
+
+                # 3. Обрабатываем данные
+                if json_data:
+                    if not isinstance(json_data, list):
+                        messages.error(request, "JSON должен быть списком объектов [{'section': '...', 'items': [...]}]")
+                    else:
+                        created_sections = 0
+                        created_characteristics = 0
+                        errors = []
+
+                        try:
+                            with transaction.atomic():
+                                for entry in json_data:
+                                    section_name = entry.get('section')
+                                    items = entry.get('items', [])
+
+                                    if not section_name:
+                                        errors.append(f"Пропущен 'section' в записи: {entry}")
+                                        continue
+
+                                    section_obj, created = CharacteristicSection.objects.get_or_create(name=section_name)
+                                    if created:
+                                        created_sections += 1
+
+                                    for item_name in items:
+                                        _, char_created = Characteristic.objects.get_or_create(
+                                            name=item_name,
+                                            section=section_obj
+                                        )
+                                        if char_created:
+                                            created_characteristics += 1
+                            
+                            if errors:
+                                messages.warning(request, f"Импорт завершен с предупреждениями. Создано разделов: {created_sections}, характеристик: {created_characteristics}. Ошибки: {'; '.join(errors)}")
+                            else:
+                                messages.success(request, f"Успешно! Создано разделов: {created_sections}, характеристик: {created_characteristics}.")
+                            
+                            return HttpResponseRedirect(reverse('admin:shop_characteristic_changelist'))
+                        
+                        except Exception as e:
+                             messages.error(request, f"Системная ошибка при импорте: {e}")
+
+        else:
+            form = ImportCharacteristicsForm()
+
+        context = {
+            'form': form,
+            'title': 'Импорт характеристик',
+            **self.admin_site.each_context(request),
+        }
+        return render(request, 'admin/shop/characteristic/import_form.html', context)
+
+@admin.register(CharacteristicGroup)
+class CharacteristicGroupAdmin(ModelAdmin):
+    change_list_template = 'admin/shop/characteristicgroup/change_list.html'
+    list_display = ('name', 'get_chars_count')
+    search_fields = ('name',)
+    filter_horizontal = ('characteristics',)
+    
+    @admin.display(description='Кол-во хар-к')
+    def get_chars_count(self, obj):
+        return obj.characteristics.count()
+
 
 @admin.register(PromoBanner)
 class PromoBannerAdmin(ModelAdmin):

@@ -1,0 +1,114 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}{{ block.super }}
+<style>
+    .import-container {
+        max_width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .import-container {
+        background: #1e293b;
+        color: #e2e8f0;
+    }
+
+    .form-row {
+        margin-bottom: 20px;
+    }
+
+    .help-block {
+        margin-top: 5px;
+        font-size: 0.85em;
+        color: #666;
+    }
+
+    .dark .help-block {
+        color: #94a3b8;
+    }
+
+    .submit-row {
+        margin-top: 20px;
+        text-align: right;
+    }
+
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f8f9fa;
+        font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    }
+
+    .dark textarea {
+        background: #0f172a;
+        border-color: #334155;
+        color: #f1f5f9;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='shop' %}">Shop</a>
+    &rsaquo; <a href="{% url 'admin:shop_characteristic_changelist' %}">{% trans 'Характеристики (справочник)' %}</a>
+    &rsaquo; {% trans 'Импорт JSON' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="import-container bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-6">📥 Импорт характеристик из JSON</h1>
+
+    <div
+        class="mb-6 p-4 bg-blue-50 text-blue-800 rounded border border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700">
+        <h3 class="font-bold mb-2">Инструкция:</h3>
+        <p class="mb-2">Используйте этот инструмент для массового добавления разделов и характеристик.</p>
+        <p class="mb-2"><strong>Формат JSON:</strong></p>
+        <pre class="bg-gray-100 dark:bg-gray-900 p-2 rounded text-xs overflow-x-auto">
+[
+  {
+    "section": "Название раздела",
+    "items": ["Характеристика 1", "Характеристика 2"]
+  }
+]
+</pre>
+    </div>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="p-4 mb-4 text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
+            <p class="font-bold">Пожалуйста, исправьте ошибки:</p>
+            {{ form.errors }}
+        </div>
+        {% endif %}
+
+        <div class="form-row">
+            <label class="block mb-2 font-bold">{{ form.json_text.label }}</label>
+            {{ form.json_text }}
+            <div class="help-block">{{ form.json_text.help_text }}</div>
+        </div>
+
+        <div class="form-row border-t pt-4 mt-4 dark:border-gray-700">
+            <label class="block mb-2 font-bold">{{ form.json_file.label }}</label>
+            {{ form.json_file }}
+            <div class="help-block">{{ form.json_file.help_text }}</div>
+        </div>
+
+        <div class="submit-row flex justify-end gap-4 mt-6 border-t pt-4 dark:border-gray-700">
+            <a href="{% url 'admin:shop_characteristic_changelist' %}"
+                class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Отмена</a>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Начать
+                импорт</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
