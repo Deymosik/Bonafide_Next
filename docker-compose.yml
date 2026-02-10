@@ -69,6 +69,7 @@ services:
     environment:
       # Добавляем имя контейнера в разрешенные хосты, чтобы Nginx мог проксировать запросы
       - ALLOWED_HOSTS_STR=${ALLOWED_HOSTS_STR}
+      - REDIS_URL=redis://redis:6379/1 # Force internal Redis URL inside Docker
     depends_on:
       db:
         condition: service_healthy
