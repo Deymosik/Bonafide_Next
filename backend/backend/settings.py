@@ -42,6 +42,21 @@ else:
 # Базовый URL сайта (для формирования ссылок в уведомлениях)
 SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
 
+# --- Настройки безопасности (Global) ---
+# Применяются и в Dev, и в Prod
+
+# Clickjacking Protection
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# Content Sniffing Protection
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Referrer Policy
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Cross-Site Scripting Protection (Browser Filter)
+SECURE_BROWSER_XSS_FILTER = True
+
 # --- Настройки безопасности для Production ---
 # Эти настройки включаются только когда DEBUG=False
 if not DEBUG:
@@ -60,11 +75,6 @@ if not DEBUG:
     # Cookies
     SESSION_COOKIE_SECURE = True  # Cookies только через HTTPS
     CSRF_COOKIE_SECURE = True     # CSRF cookie только через HTTPS
-    
-    # Дополнительная защита
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_BROWSER_XSS_FILTER = True
-    X_FRAME_OPTIONS = 'DENY'
 
 
 # --- Приложения Django ---
@@ -105,6 +115,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'shop.middleware_security.BlacklistMiddleware', # <-- BLACKLIST CHECK
     # WhiteNoise для эффективной раздачи статики
    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -164,12 +175,15 @@ if 'test' in sys.argv:
     }
 
 
-# --- Кеширование (Новое) ---
-# В продакшене лучше использовать Redis, но для старта пойдет LocMemCache
+# --- Кеширование (Redis) ---
+# Иcпользуем встроенный Redis backend (Django 4.0+)
+# Для этого нужен установленный пакет 'redis' (он у нас есть)
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
+
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_URL,
     }
 }
 
@@ -179,6 +193,24 @@ CACHES = {
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': [],
+    
+    # --- RATE LIMITING (Защита от спама) ---
+    'DEFAULT_THROTTLE_CLASSES': [
+        'shop.throttling.SmartUserRateThrottle', # <-- VIP (Telegram/Session)
+        'shop.throttling.SmartAnonRateThrottle', # <-- Fallback (IP)
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/min',       # Анонимы: 1 запрос в секунду
+        'user': '1000/day',     # Авторизованные: лояльнее
+        'orders': '5/min',      # Создание заказа: не чаще раз в 12 секунд
+        'uploads': '20/min',    # Загрузка файлов
+        'auth': '10/min',       # Попытки входа (если будут)
+    },
+    
+    # --- EXCEPTION HANDLER (Логирование атак) ---
+    'EXCEPTION_HANDLER': 'shop.exceptions.custom_exception_handler',
+
     # Swagger Schema
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
@@ -504,6 +536,16 @@ UNFOLD = {
                         "title": _("Группы"),
                         "icon": "group",
                         "link": reverse_lazy("admin:auth_group_changelist"),
+                    },
+                    {
+                        "title": _("Журнал атак (429)"),
+                        "icon": "shield",
+                        "link": reverse_lazy("admin:shop_securityblocklog_changelist"),
+                    },
+                    {
+                        "title": _("Черный список"),
+                        "icon": "block",
+                        "link": reverse_lazy("admin:shop_blacklisteditem_changelist"),
                     },
                 ],
             },

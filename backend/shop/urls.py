@@ -6,6 +6,7 @@ from .views import (
     OrderCreateView, OrderDetailView, ArticleListView, ArticleDetailView, ArticleIncrementViewCountView,
     TinyMCEImageUploadView
 )
+from .views_security import HoneyPotView
 
 urlpatterns = [
     path('categories/', CategoryListView.as_view(), name='category-list'),
@@ -24,4 +25,7 @@ urlpatterns = [
     path('articles/<slug:slug>/increment-view/', ArticleIncrementViewCountView.as_view(), name='article-increment-view'),
     # TinyMCE image upload endpoint
     path('tinymce/upload-image/', TinyMCEImageUploadView.as_view(), name='tinymce-image-upload'),
+    
+    # --- HoneyPot Trap ---
+    path('admin-secret-debug/', HoneyPotView.as_view(), name='honeypot-trap'),
 ]

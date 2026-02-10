@@ -526,6 +526,11 @@ class ShopSettings(models.Model):
 
     article_font_family = models.CharField("Название шрифта для статей", max_length=100, default="Exo 2",help_text="Например: 'Roboto', 'Times New Roman', 'Exo 2'")
 
+    # --- Настройки Авто-Бана (Anti-DDoS) ---
+    auto_ban_enabled = models.BooleanField("Включить Авто-Бан", default=True, help_text="Блокировать ли пользователей автоматически при частых атаках (429 ошибок)")
+    auto_ban_threshold = models.PositiveIntegerField("Порог блокировки (кол-во нарушений)", default=15, help_text="Сколько раз нужно получить '429 Too Many Requests', чтобы попасть в Черный список")
+    auto_ban_hours = models.PositiveIntegerField("Период учета нарушений (часов)", default=1, help_text="За какое время считать нарушения (например, 15 нарушений за 1 час)")
+
     # --- 1. ИЗМЕНЕНИЕ: Добавляем блок SEO-полей ---
     site_name = models.CharField("Название сайта (для SEO)", max_length=50, default="BonaFide55", help_text="Используется в шаблонах мета-тегов как переменная {{site_name}}")
 
@@ -850,3 +855,40 @@ class Backup(models.Model):
         verbose_name = "Резервная копия"
         verbose_name_plural = "Резервные копии"
         ordering = ['-created_at']
+
+# --- SECURITY MODELS ---
+# from django.db import models # Already imported at top
+
+class BlacklistedItem(models.Model):
+    class ItemType(models.TextChoices):
+        IP = 'IP', 'IP адрес'
+        TELEGRAM_ID = 'TG', 'Telegram ID'
+
+    item_type = models.CharField("Тип блокировки", max_length=2, choices=ItemType.choices, default=ItemType.IP)
+    value = models.CharField("Значение", max_length=255, help_text="IP адрес или Telegram ID")
+    reason = models.TextField("Причина блокировки", blank=True)
+    created_at = models.DateTimeField("Дата блокировки", auto_now_add=True)
+    is_active = models.BooleanField("Активна", default=True)
+
+    class Meta:
+        verbose_name = "⛔ Черный список"
+        verbose_name_plural = "⛔ Черный список"
+        unique_together = ('item_type', 'value')
+
+    def __str__(self):
+        return f"[{self.get_item_type_display()}] {self.value}"
+
+class SecurityBlockLog(models.Model):
+    ip_address = models.GenericIPAddressField("IP адрес")
+    telegram_id = models.CharField("Telegram ID", max_length=100, null=True, blank=True)
+    request_path = models.CharField("Путь запроса", max_length=255)
+    limit_type = models.CharField("Сработал лимит", max_length=50, help_text="Какой throttle class сработал")
+    created_at = models.DateTimeField("Дата инцидента", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "🛡 Журнал атак (429)"
+        verbose_name_plural = "🛡 Журнал атак (429)"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.ip_address} -> {self.request_path} ({self.created_at})"

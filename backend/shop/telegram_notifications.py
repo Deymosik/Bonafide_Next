@@ -164,3 +164,30 @@ def send_order_notification(order):
     except Exception as e:
         logger.error(f"Неожиданная ошибка при отправке уведомления о заказе #{order.id}: {e}")
         return False
+
+
+def format_security_alert_message(ip, telegram_id, count, reason, duration_hours, blacklist_id=None):
+    """
+    Форматирует сообщение о блокировке злоумышленника.
+    """
+    subject = "IP-адрес" if ip else "Telegram ID"
+    value = ip if ip else telegram_id
+    
+    admin_link = ""
+    if blacklist_id:
+        site_url = getattr(settings, 'SITE_URL', '')
+        admin_path = getattr(settings, 'ADMIN_URL', 'admin/')
+        if site_url:
+            admin_link = f"\n\n🔗 <a href=\"{site_url}/{admin_path}shop/blacklisteditem/{blacklist_id}/change/\">Управление блокировкой</a>"
+
+    message = f"""🛡️ <b>SECURITY ALERT: АВТО-БАН</b>
+
+🚫 <b>Заблокирован {subject}:</b> <code>{value}</code>
+🔢 <b>Количество атак:</b> {count} (за последние {duration_hours} ч.)
+📝 <b>Причина:</b> {reason}
+
+Автоматически добавлен в Черный список.
+Доступ к сайту заблокирован (403 Forbidden).{admin_link}
+"""
+    return message
+

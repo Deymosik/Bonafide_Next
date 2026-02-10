@@ -1,6 +1,6 @@
 from celery import shared_task
 from .models import Order
-from .telegram_notifications import send_order_notification
+from .telegram_notifications import send_order_notification, send_telegram_message, format_security_alert_message
 import logging
 
 logger = logging.getLogger(__name__)
@@ -186,3 +186,94 @@ def restore_backup_task(backup_id):
             backup.save()
         except:
             pass
+from celery import shared_task
+from .models import Order
+from .telegram_notifications import send_order_notification, send_telegram_message, format_security_alert_message
+import logging
+
+logger = logging.getLogger(__name__)
+
+# ... existing tasks ...
+
+@shared_task
+def check_and_autoban_task(ip_address, telegram_id):
+    """
+    Проверяет, не пора ли забанить пользователя за частые нарушения (429).
+    """
+    from .models import SecurityBlockLog, BlacklistedItem, ShopSettings
+    from django.utils import timezone
+    from datetime import timedelta
+    from django.db.models import Count
+
+    try:
+        settings = ShopSettings.objects.first()
+        if not settings or not settings.auto_ban_enabled:
+            return
+
+        threshold = settings.auto_ban_threshold
+        hours = settings.auto_ban_hours
+        time_threshold = timezone.now() - timedelta(hours=hours)
+
+        # 1. Формируем QuerySet
+        logs = SecurityBlockLog.objects.filter(created_at__gte=time_threshold)
+        
+        count = 0
+        subject_type = None
+        subject_value = None
+
+        if telegram_id:
+            count = logs.filter(telegram_id=telegram_id).count()
+            subject_type = BlacklistedItem.ItemType.TELEGRAM_ID
+            subject_value = telegram_id
+        elif ip_address:
+            count = logs.filter(ip_address=ip_address).count()
+            subject_type = BlacklistedItem.ItemType.IP
+            subject_value = ip_address
+            
+        # 2. Проверяем порог
+        if count >= threshold:
+            # 3. Баним (если еще не забанен)
+            obj, created = BlacklistedItem.objects.get_or_create(
+                item_type=subject_type,
+                value=subject_value,
+                defaults={
+                    'reason': f"Auto-Ban: {count} нарушений за {hours}ч.",
+                    'is_active': True
+                }
+            )
+
+            # 4. Уведомляем (только если только что забанили)
+            if created:
+                logger.warning(f"AUTO-BAN ACTIVATED: {subject_value} ({count} attacks)")
+                
+                if settings.manager_telegram_chat_id:
+                    msg = format_security_alert_message(
+                        ip=ip_address if subject_type == 'IP' else None,
+                        telegram_id=telegram_id if subject_type == 'TG' else None,
+                        count=count,
+                        reason=obj.reason,
+                        duration_hours=hours,
+                        blacklist_id=obj.id
+                    )
+                    send_telegram_message(settings.manager_telegram_chat_id, msg)
+            else:
+                # Если уже был в базе, но был неактивен - включаем обратно?
+                # Логика: если админ разбанил, а он опять атакует - баним снова.
+                if not obj.is_active:
+                    obj.is_active = True
+                    obj.reason = f"Auto-Ban (Reactivated): {count} нарушений за {hours}ч."
+                    obj.save()
+                    
+                    if settings.manager_telegram_chat_id:
+                        msg = format_security_alert_message(
+                            ip=ip_address if subject_type == 'IP' else None,
+                            telegram_id=telegram_id if subject_type == 'TG' else None,
+                            count=count,
+                            reason=obj.reason,
+                            duration_hours=hours,
+                            blacklist_id=obj.id
+                        )
+                        send_telegram_message(settings.manager_telegram_chat_id, msg)
+
+    except Exception as e:
+        logger.error(f"Error in check_and_autoban_task: {e}")

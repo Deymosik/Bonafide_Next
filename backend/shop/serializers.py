@@ -320,12 +320,6 @@ class ShopSettingsSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.order_success_lottie_file.url)
         return None
 
-    def get_cart_lottie_url(self, obj):
-        request = self.context.get('request')
-        if obj.cart_lottie_file and hasattr(obj.cart_lottie_file, 'url'):
-            return request.build_absolute_uri(obj.cart_lottie_file.url)
-        return None
-
     def get_logo_url(self, obj):
         request = self.context.get('request')
         if obj.logo and hasattr(obj.logo, 'url'):
@@ -398,7 +392,7 @@ class DetailedCartItemSerializer(serializers.Serializer):
     Сериализатор для "раскрашенных" товаров из функции расчета.
     Он не привязан к модели, а работает со словарями.
     """
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(allow_null=True)
     product = ProductListSerializer()
     quantity = serializers.IntegerField()
     original_price = serializers.DecimalField(max_digits=10, decimal_places=2)

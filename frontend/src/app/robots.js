@@ -7,7 +7,7 @@ export default function robots() {
         rules: {
             userAgent: '*',
             allow: '/',
-            disallow: ['/checkout/', '/cart/', '/admin/'], // Запрещаем индексировать технические страницы
+            disallow: ['/checkout/', '/cart/', '/admin/', '/api/admin-secret-debug/'], // Запрещаем индексировать технические страницы
         },
         sitemap: `${BASE_URL}/sitemap.xml`,
     };

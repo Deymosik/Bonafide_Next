@@ -28,7 +28,7 @@ from .models import (
     Feature, CharacteristicSection, Characteristic, ProductCharacteristic, Cart,
 
     CartItem, Order, OrderItem, ArticleCategory, Article, Backup, CharacteristicGroup,
-    FeatureDefinition
+    FeatureDefinition, SecurityBlockLog, BlacklistedItem
 )
 from .admin_forms import ProductAdminForm, CharacteristicsWidget
 from tinymce.models import HTMLField
@@ -624,6 +624,14 @@ class ShopSettingsAdmin(ModelAdmin):
                 'free_shipping_threshold'
             )
         }),
+        ('Безопасность (Anti-DDoS)', {
+            'classes': ('tab',),
+            'fields': (
+                'auto_ban_enabled', 
+                'auto_ban_threshold',
+                'auto_ban_hours'
+            )
+        }),
     )
 
     def has_add_permission(self, request):
@@ -976,3 +984,23 @@ class BackupAdmin(ModelAdmin):
         return HttpResponseRedirect(reverse('admin:shop_backup_changelist'))
 
     change_list_template = 'admin/shop/backup/change_list.html'
+
+@admin.register(SecurityBlockLog)
+class SecurityBlockLogAdmin(ModelAdmin):
+    list_display = ('ip_address', 'telegram_id', 'limit_type', 'request_path', 'created_at')
+    list_filter = ('limit_type', ('created_at', RangeDateFilter))
+    search_fields = ('ip_address', 'telegram_id', 'request_path')
+    readonly_fields = ('ip_address', 'telegram_id', 'request_path', 'limit_type', 'created_at')
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+
+@admin.register(BlacklistedItem)
+class BlacklistedItemAdmin(ModelAdmin):
+    list_display = ('item_type', 'value', 'is_active', 'created_at', 'reason')
+    list_filter = ('item_type', 'is_active')
+    search_fields = ('value', 'reason')
+    list_editable = ('is_active',)

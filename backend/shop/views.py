@@ -327,147 +327,8 @@ class DealOfTheDayView(generics.RetrieveAPIView):
 
 
 
-def calculate_detailed_discounts(items):
-    """
-    Рассчитывает скидки и возвращает ДЕТАЛИЗИРОВАННЫЙ список товаров.
-    'items' должен быть списком CartItem.
-    """
-    if not items:
-        return {
-            'items': [],
-            'subtotal': '0.00', 'discount_amount': '0.00', 'final_total': '0.00',
-            'applied_rule': None, 'upsell_hint': None
-        }
-
-    subtotal = Decimal('0')
-    total_quantity = 0
-    product_quantities = {}
-    category_quantities = {}
-
-    # Конвертируем queryset в простой список для удобства
-    item_list = [{'product': item.product, 'quantity': item.quantity, 'id': item.id} for item in items]
-
-    for item in item_list:
-        product = item['product']
-        quantity = item['quantity']
-        price = product.current_price
-        subtotal += price * quantity
-        total_quantity += quantity
-        product_quantities[product.id] = quantity
-        current_category = product.category
-        while current_category is not None:
-            category_quantities[current_category.id] = category_quantities.get(current_category.id, 0) + quantity
-            current_category = current_category.parent
-
-    best_discount_amount = Decimal('0')
-    applied_rule = None
-    active_rules = DiscountRule.objects.filter(is_active=True).select_related('product_target', 'category_target')
-
-    for rule in active_rules:
-        current_discount = Decimal('0')
-        if rule.discount_type == DiscountRule.DiscountType.TOTAL_QUANTITY:
-            if total_quantity >= rule.min_quantity:
-                current_discount = subtotal * (rule.discount_percentage / 100)
-        elif rule.discount_type == DiscountRule.DiscountType.PRODUCT_QUANTITY and rule.product_target_id in product_quantities:
-            if product_quantities[rule.product_target_id] >= rule.min_quantity:
-                target_subtotal = item_list[0]['product'].current_price * item_list[0]['quantity'] # Пример упрощен
-                for item in item_list:
-                    if item['product'].id == rule.product_target_id:
-                        target_subtotal = item['product'].current_price * item['quantity']
-                current_discount = target_subtotal * (rule.discount_percentage / 100)
-        elif rule.discount_type == DiscountRule.DiscountType.CATEGORY_QUANTITY and rule.category_target_id in category_quantities:
-            if category_quantities[rule.category_target_id] >= rule.min_quantity:
-                target_subtotal = Decimal('0')
-                target_category_id = rule.category_target_id
-                for item in item_list:
-                    is_in_target_category = False
-                    cat = item['product'].category
-                    while cat is not None:
-                        if cat.id == target_category_id: is_in_target_category = True; break
-                        cat = cat.parent
-                    if is_in_target_category: target_subtotal += item['product'].current_price * item['quantity']
-                current_discount = target_subtotal * (rule.discount_percentage / 100)
-        if current_discount > best_discount_amount:
-            best_discount_amount = current_discount
-            applied_rule = rule
-
-    # --- 2. "РАСКРАШИВАЕМ" ТОВАРЫ ПОСЛЕ НАХОЖДЕНИЯ ЛУЧШЕЙ СКИДКИ ---
-    final_items = []
-    if applied_rule:
-        for item in item_list:
-            product = item['product']
-            quantity = item['quantity']
-            original_price = product.current_price
-            discounted_price = None
-
-            is_discounted = False
-            if applied_rule.discount_type == DiscountRule.DiscountType.TOTAL_QUANTITY:
-                is_discounted = True
-            elif applied_rule.discount_type == DiscountRule.DiscountType.PRODUCT_QUANTITY:
-                if product.id == applied_rule.product_target_id: is_discounted = True
-            elif applied_rule.discount_type == DiscountRule.DiscountType.CATEGORY_QUANTITY:
-                cat = product.category
-                while cat is not None:
-                    if cat.id == applied_rule.category_target_id: is_discounted = True; break
-                    cat = cat.parent
-
-            if is_discounted:
-                discounted_price = original_price * (Decimal('100') - applied_rule.discount_percentage) / Decimal('100')
-
-            final_items.append({
-                'id': item['id'],
-                'product': product,
-                'quantity': quantity,
-                'original_price': original_price,
-                'discounted_price': discounted_price.quantize(Decimal("0.01")) if discounted_price else None
-            })
-    else:
-        # Если скидки нет, просто форматируем данные
-        for item in item_list:
-            final_items.append({
-                'id': item['id'],
-                'product': item['product'],
-                'quantity': item['quantity'],
-                'original_price': item['product'].current_price,
-                'discounted_price': None
-            })
-
-
-    # --- Логика подсказок остается той же, она уже работает правильно ---
-    upsell_hint = None
-    if not applied_rule:
-        # ... (здесь вся ваша существующая логика для upsell_hint без изменений)
-        min_needed_for_hint = float('inf')
-        for rule in active_rules:
-            needed = 0
-            current_hint = ""
-            if rule.discount_type == DiscountRule.DiscountType.TOTAL_QUANTITY:
-                needed = rule.min_quantity - total_quantity
-                if 0 < needed: current_hint = f"Добавьте еще {needed} шт. любого товара, чтобы получить скидку {rule.discount_percentage}%!"
-            elif rule.discount_type == DiscountRule.DiscountType.PRODUCT_QUANTITY and rule.product_target:
-                current_qty = product_quantities.get(rule.product_target.id, 0)
-                needed = rule.min_quantity - current_qty
-                if 0 < needed: current_hint = f"Добавьте еще {needed} шт. товара «{rule.product_target.name}», чтобы получить скидку {rule.discount_percentage}%!"
-            elif rule.discount_type == DiscountRule.DiscountType.CATEGORY_QUANTITY and rule.category_target:
-                current_qty = category_quantities.get(rule.category_target.id, 0)
-                needed = rule.min_quantity - current_qty
-                if 0 < needed: current_hint = f"Добавьте еще {needed} шт. из категории «{rule.category_target.name}», чтобы получить скидку {rule.discount_percentage}%!"
-
-            if current_hint and needed < min_needed_for_hint:
-                min_needed_for_hint = needed
-                upsell_hint = current_hint
-
-    # --- Финальный расчет ---
-    final_total = subtotal - best_discount_amount
-
-    return {
-        'items': final_items,
-        'subtotal': subtotal.quantize(Decimal("0.01")),
-        'discount_amount': best_discount_amount.quantize(Decimal("0.01")),
-        'final_total': final_total,
-        'applied_rule': applied_rule.name if applied_rule else None,
-        'upsell_hint': upsell_hint,
-    }
+# --- СЕРВИС РАСЧЕТА ЦЕН (Refactored) ---
+from .services.pricing import CartPricingService
 
 
 # --- 2. ОБНОВЛЕННЫЙ VIEW ДЛЯ ДИНАМИЧЕСКОГО РАСЧЕТА ---
@@ -488,7 +349,7 @@ class CalculateSelectionView(SessionAuthMixin):
             except Product.DoesNotExist:
                 continue
 
-        detailed_data = calculate_detailed_discounts(cart_items_mock)
+        detailed_data = CartPricingService().calculate(cart_items_mock)
         # Сериализуем "раскрашенные" товары
         detailed_data['items'] = DetailedCartItemSerializer(detailed_data['items'], many=True, context={'request': request}).data
         return Response(detailed_data)
@@ -501,7 +362,7 @@ class CartView(SessionAuthMixin):
         if not cart:
             return Response({"error": "Cart not found or session invalid"}, status=status.HTTP_404_NOT_FOUND)
 
-        detailed_data = calculate_detailed_discounts(cart.items.all())
+        detailed_data = CartPricingService().calculate(cart.items.all())
         # Сериализуем "раскрашенные" товары
         detailed_data['items'] = DetailedCartItemSerializer(detailed_data['items'], many=True, context={'request': request}).data
 
@@ -538,7 +399,7 @@ class CartView(SessionAuthMixin):
 
         # Возвращаем обновленное состояние всей корзины с расчетами
         cart.refresh_from_db()
-        detailed_data = calculate_detailed_discounts(cart.items.all())
+        detailed_data = CartPricingService().calculate(cart.items.all())
         detailed_data['items'] = DetailedCartItemSerializer(detailed_data['items'], many=True, context={'request': request}).data
         return Response(detailed_data, status=status.HTTP_200_OK)
 
@@ -556,7 +417,7 @@ class CartView(SessionAuthMixin):
 
             # Возвращаем обновленное состояние
             cart.refresh_from_db()
-            detailed_data = calculate_detailed_discounts(cart.items.all())
+            detailed_data = CartPricingService().calculate(cart.items.all())
             detailed_data['items'] = DetailedCartItemSerializer(detailed_data['items'], many=True, context={'request': request}).data
             return Response(detailed_data, status=status.HTTP_200_OK)
 
@@ -565,6 +426,7 @@ class CartView(SessionAuthMixin):
 
 # --- 4. ОБНОВЛЕННЫЙ OrderCreateView ---
 class OrderCreateView(SessionAuthMixin):
+    throttle_scope = 'orders'
     def post(self, request, *args, **kwargs):
         cart = self.get_cart()
         if not cart:
@@ -581,7 +443,9 @@ class OrderCreateView(SessionAuthMixin):
             return Response({"error": "Selected items not found in cart"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Рассчитываем итоговые суммы
-        calculation_results = calculate_detailed_discounts(list(items_to_order))
+        # ИСПОЛЬЗУЕМ НОВЫЙ СЕРВИС
+        pricing_service = CartPricingService()
+        calculation_results = pricing_service.calculate(list(items_to_order))
 
         # Формируем контекст для сериализатора
         context = {

@@ -7,3 +7,4 @@ class ShopConfig(AppConfig):
 
     def ready(self):
         import shop.signals
+        import shop.signals_security
