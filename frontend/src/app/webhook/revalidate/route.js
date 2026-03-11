@@ -6,7 +6,13 @@ export async function POST(request) {
         const { secret, slug } = await request.json();
 
         // Check for secret to confirm this is a valid request
-        if (secret !== process.env.REVALIDATION_TOKEN && secret !== 'my-secret-token-123') {
+        if (!process.env.REVALIDATION_TOKEN) {
+            console.error('REVALIDATION_TOKEN is not configured manually on the server.');
+            return NextResponse.json({ message: 'Server configuration error' }, { status: 500 });
+        }
+
+        if (secret !== process.env.REVALIDATION_TOKEN) {
+            console.warn(`Attempt to revalidate with invalid token: ${secret}`);
             return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
         }
 

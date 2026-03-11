@@ -553,6 +553,6 @@ UNFOLD = {
     },
 }
 # --- Next.js Revalidation ---
-NEXTJS_REVALIDATE_URL = os.environ.get("NEXTJS_REVALIDATE_URL", "http://frontend:3000/api/revalidate")
+NEXTJS_REVALIDATE_URL = os.environ.get("NEXTJS_REVALIDATE_URL", "http://frontend:3000/webhook/revalidate")
 REVALIDATION_TOKEN = os.environ.get("REVALIDATION_TOKEN", "my-secret-token-123")
 

@@ -42,35 +42,13 @@ def trigger_banner_optimization(sender, instance, created, **kwargs):
 
 # --- REVALIDATION SIGNALS ---
 
-def revalidate_product(slug):
-    """
-    Отправляет запрос в Next.js для ревалидации страницы товара.
-    """
-    try:
-        url = settings.NEXTJS_REVALIDATE_URL
-        token = settings.REVALIDATION_TOKEN
-        
-        # Если мы запускаем тесты или локально без фронтенда, можно добавить проверку
-        # Но requests просто кинет исключение, которое мы ловим.
-
-        payload = {
-            'secret': token,
-            'slug': slug
-        }
-        
-        response = requests.post(url, json=payload, timeout=2) # Таймаут 2 сек, чтобы не висело
-        if response.status_code == 200:
-            logger.info(f"Successfully triggered revalidation for {slug}")
-        else:
-            logger.warning(f"Failed to revalidate {slug}. Status: {response.status_code}, Response: {response.text}")
-            
-    except Exception as e:
-        logger.error(f"Error triggering revalidation for {slug}: {str(e)}")
-
 @receiver(post_save, sender=Product)
 def trigger_product_revalidation(sender, instance, created, **kwargs):
     """
-    При изменении товара (включая сток) триггерим ревалидацию.
+    При изменении товара (включая сток или цены) триггерим ревалидацию
+    страницы товара используя фоновую задачу Celery.
     """
-    # Используем on_commit, чтобы запрос ушел только после того, как данные реально записались в БД
-    transaction.on_commit(lambda: revalidate_product(instance.slug))
+    from .tasks import send_revalidation_webhook_task
+    # Используем on_commit, чтобы задача отправилась в брокера только после того,
+    # как транзакция успешна сохранена в БД (избегаем race conditions).
+    transaction.on_commit(lambda: send_revalidation_webhook_task.delay(instance.slug))

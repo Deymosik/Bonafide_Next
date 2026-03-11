@@ -277,3 +277,45 @@ def check_and_autoban_task(ip_address, telegram_id):
 
     except Exception as e:
         logger.error(f"Error in check_and_autoban_task: {e}")
+
+@shared_task(bind=True, max_retries=3)
+def send_revalidation_webhook_task(self, slug):
+    """
+    Задача для отправки вебхука ревалидации в Next.js.
+    Использует экспоненциальный backoff при сбоях (до 3 попыток).
+    """
+    from django.conf import settings
+    import requests
+
+    try:
+        url = getattr(settings, 'NEXTJS_REVALIDATE_URL', None)
+        token = getattr(settings, 'REVALIDATION_TOKEN', None)
+
+        if not url or not token:
+            logger.error("NEXTJS_REVALIDATE_URL or REVALIDATION_TOKEN not configured in settings.")
+            return False
+
+        payload = {
+            'secret': token,
+            'slug': slug
+        }
+        
+        # Устанавливаем таймаут, чтобы воркер не зависал навсегда
+        response = requests.post(url, json=payload, timeout=5)
+        
+        if response.status_code == 200:
+            logger.info(f"Successfully triggered revalidation for {slug}")
+            return True
+        else:
+            logger.warning(f"Failed to revalidate {slug}. Status: {response.status_code}, Response: {response.text}")
+            # Возвращаем False, но не кидаем Exception, чтобы не засорять очередь,
+            # если Next.js сознательно вернул 4xx/5xx (например, slug не найден).
+            return False
+            
+    except requests.exceptions.RequestException as exc:
+        logger.error(f"Network error triggering revalidation for {slug}: {str(exc)}")
+        # Перезапускаем задачу с увеличивающейся задержкой: 2^попытка * 10 секунд (10s, 20s, 40s)
+        raise self.retry(exc=exc, countdown=10 * (2 ** self.request.retries))
+    except Exception as e:
+        logger.error(f"Unexpected error triggering revalidation for {slug}: {str(e)}")
+        return False
